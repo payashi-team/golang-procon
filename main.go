@@ -6,37 +6,21 @@ import (
 	"os"
 )
 
-func main(){
-  defer _w.Flush()
-  var N int
-  fmt.Fscan(_r, &N)
-  s:=make([]bool, N)
-  for i := 0; i < N; i++ {
-    var op string
-    fmt.Fscan(_r, &op)
-    if(op=="AND"){
-      s[i]=true
-    }
-  }
-  ans:=Solve(N, s)
-  fmt.Fprintf(_w, "%d\n", ans)
+func main() {
+	defer _w.Flush()
+	var K, A, B int
+	fmt.Fscan(_r, &K, &A, &B)
+	ans := Solve(K, A, B)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, s []bool)int{
-  t:=make([]int, N+1)
-  f:=make([]int, N+1)
-  t[0] = 1
-  f[0] = 1
-  for i := 0; i < N; i++ {
-    if(s[i]){
-      t[i+1] = t[i]
-      f[i+1] = t[i]+2*f[i]
-    }else{
-      t[i+1] = 2*t[i] + f[i]
-      f[i+1] = f[i]
-    }
-  }
-  return t[N]
+func Solve(K, A, B int) int {
+	M := K - A + 1
+	if B-A <= 2 || M < 0 {
+		return K + 1
+	} else {
+		return A + M/2*(B-A) + M%2
+	}
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
