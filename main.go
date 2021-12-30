@@ -4,42 +4,50 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 func main() {
 	defer _w.Flush()
-	var S string
-	fmt.Fscan(_r, &S)
-	ans := Solve(S)
-	fmt.Fprintf(_w, "%s\n", ans)
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	B := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &B[i])
+	}
+	ans := Solve(N, A, B)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(S string) string {
-	var a, b, c int
-	for i := 0; i < len(S); i++ {
-		if S[i]=='a'{
-			a++;
-		}else if S[i]=='b'{
-			b++;
-		}else{
-			c++;
+func Solve(N int, A, B []int) int {
+	sumA := 0
+	sumB := 0
+	for i := 0; i < N; i++ {
+		sumA += A[i]
+		sumB += B[i]
+	}
+	if sumA < sumB {
+		return -1
+	}
+	ret := 0
+	shortage := 0
+	surplus := make([]int, 0)
+	for i := 0; i < N; i++ {
+		if A[i] < B[i] {
+			shortage += B[i] - A[i]
+			ret++
+		} else if A[i] > B[i] {
+			surplus = append(surplus, A[i]-B[i])
 		}
 	}
-	max:=MaxInt([]int{a, b, c})
-	min:=-MaxInt([]int{-a, -b, -c})
-	if max-min>1{
-		return "NO"
-	}else{
-		return "YES"
-	}
-}
-
-func MaxInt(nums []int)int{
-	ret:=-int(1e5)
-	for _, v := range nums {
-		if ret<v{
-			ret = v
-		}
+	sort.Slice(surplus, func(i, j int) bool {return surplus[i]>surplus[j]})
+	for i:=0;shortage>0;i++ {
+		shortage -=surplus[i]
+		ret++
 	}
 	return ret
 }
