@@ -1,40 +1,33 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"sort"
 )
 
 func main() {
-	defer _w.Flush()
 	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	B := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+	fmt.Scan(&N)
+	seats := make([]string, N)
+	fmt.Printf("0\n")
+	fmt.Scan(&seats[0])
+	if seats[0] == "Vacant" {
+		return
 	}
-	ans := Solve(N, A, B)
-	fmt.Fprintf(_w, "%d\n", ans)
-}
-
-func Solve(N int, A, B []int) int {
-	C := make([][]int, N)
-	for i := 0; i < N; i++ {
-		C[i] = []int{A[i], B[i]}
-	}
-	sort.Slice(C, func(i, j int) bool { return C[i][0]+C[i][1] > C[j][0]+C[j][1] })
-	ret := 0
-	for i := 0; i < N; i++ {
-		if i%2 == 0 {
-			ret += C[i][0]
+	l := 0
+	r := N
+	for {
+		mid := (l + r) / 2
+		fmt.Printf("%d\n", mid)
+		fmt.Scan(&seats[mid])
+		if seats[mid] == "Vacant" {
+			break
+		}
+		if (seats[l] == seats[mid]) == ((mid-l)%2 == 1) {
+			r = mid
 		} else {
-			ret -= C[i][1]
+			l = mid
 		}
 	}
-	return ret
 }
 
-var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+// var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
