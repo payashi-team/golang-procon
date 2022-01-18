@@ -1,33 +1,51 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 )
 
 func main() {
-	var N int
-	fmt.Scan(&N)
-	seats := make([]string, N)
-	fmt.Printf("0\n")
-	fmt.Scan(&seats[0])
-	if seats[0] == "Vacant" {
-		return
+	defer _w.Flush()
+	var H, W int
+	fmt.Fscan(_r, &H, &W)
+	A := make([][]byte, H)
+	for i := 0; i < H; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	l := 0
-	r := N
-	for {
-		mid := (l + r) / 2
-		fmt.Printf("%d\n", mid)
-		fmt.Scan(&seats[mid])
-		if seats[mid] == "Vacant" {
-			break
-		}
-		if (seats[l] == seats[mid]) == ((mid-l)%2 == 1) {
-			r = mid
-		} else {
-			l = mid
-		}
+	ans := Solve(H, W, A)
+	if ans {
+		fmt.Fprintf(_w, "Yes\n")
+	} else {
+		fmt.Fprintf(_w, "No\n")
 	}
 }
 
-// var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+func Solve(H, W int, A [][]byte) bool {
+	cnt := make(map[byte]int)
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			cnt[A[i][j]]++
+		}
+	}
+	var p, q int
+	for _, v := range cnt {
+		p += v / 4
+		if v%2 == 1 {
+			q++
+		}
+	}
+	if H%2+W%2 == 0 {
+		return p == H*W/4
+	} else if H*W%2 == 1 {
+		return p >= (H-1)*(W-1)/4 && q == 1
+	} else {
+		if H%2 == 0 {
+			H, W = W, H
+		}
+		return p >= (H-1)*W/4 && q == 0
+	}
+}
+
+var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
