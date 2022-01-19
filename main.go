@@ -8,44 +8,33 @@ import (
 
 func main() {
 	defer _w.Flush()
-	var H, W int
-	fmt.Fscan(_r, &H, &W)
-	A := make([][]byte, H)
-	for i := 0; i < H; i++ {
-		fmt.Fscan(_r, &A[i])
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	A := make([]int, M)
+	B := make([]int, M)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &A[i], &B[i])
 	}
-	ans := Solve(H, W, A)
+	ans := Solve(N, M, A, B)
 	if ans {
-		fmt.Fprintf(_w, "Yes\n")
+		fmt.Fprintf(_w, "YES\n")
 	} else {
-		fmt.Fprintf(_w, "No\n")
+		fmt.Fprintf(_w, "NO\n")
 	}
 }
 
-func Solve(H, W int, A [][]byte) bool {
-	cnt := make(map[byte]int)
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			cnt[A[i][j]]++
-		}
+func Solve(N, M int, A, B []int) bool {
+	cnt := make(map[int]int)
+	for i := 0; i < M; i++ {
+		cnt[A[i]]++
+		cnt[B[i]]++
 	}
-	var p, q int
 	for _, v := range cnt {
-		p += v / 4
 		if v%2 == 1 {
-			q++
+			return false
 		}
 	}
-	if H%2+W%2 == 0 {
-		return p == H*W/4
-	} else if H*W%2 == 1 {
-		return p >= (H-1)*(W-1)/4 && q == 1
-	} else {
-		if H%2 == 0 {
-			H, W = W, H
-		}
-		return p >= (H-1)*W/4 && q == 0
-	}
+	return true
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
