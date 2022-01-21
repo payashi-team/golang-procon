@@ -6,35 +6,50 @@ import (
 	"os"
 )
 
+const (
+	// MOD = int(1e9 + 7)
+	MOD = 998244353
+)
+
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	A := make([]int, M)
-	B := make([]int, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	B := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, M, A, B)
-	if ans {
-		fmt.Fprintf(_w, "YES\n")
-	} else {
-		fmt.Fprintf(_w, "NO\n")
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &B[i])
 	}
+	ans := Solve(N, A, B)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, A, B []int) bool {
-	cnt := make(map[int]int)
-	for i := 0; i < M; i++ {
-		cnt[A[i]]++
-		cnt[B[i]]++
+func Solve(N int, A, B []int) int {
+	C := make([]int, 3001)
+	for i := A[0]; i <= B[0]; i++ {
+		C[i] = 1
 	}
-	for _, v := range cnt {
-		if v%2 == 1 {
-			return false
+	for i := 1; i < N; i++ {
+		sum := 0
+		for j := 0; j <= 3000; j++ {
+			sum += C[j]
+			sum %= MOD
+			if j > B[i] || j < A[i] {
+				C[j] = 0
+			} else {
+				C[j] = sum
+			}
 		}
 	}
-	return true
+	ret := 0
+	for i := 0; i <= 3000; i++ {
+		ret += C[i]
+		ret %= MOD
+	}
+	return ret
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
