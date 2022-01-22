@@ -4,52 +4,49 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 )
 
-const (
-	// MOD = int(1e9 + 7)
-	MOD = 998244353
-)
+// const (
+// MOD = int(1e9 + 7)
+// MOD = 998244353
+// )
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	B := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
-	}
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &B[i])
-	}
-	ans := Solve(N, A, B)
+	var N, a int
+	fmt.Fscan(_r, &a, &N)
+	ans := Solve(a, N)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A, B []int) int {
-	C := make([]int, 3001)
-	for i := A[0]; i <= B[0]; i++ {
-		C[i] = 1
-	}
-	for i := 1; i < N; i++ {
-		sum := 0
-		for j := 0; j <= 3000; j++ {
-			sum += C[j]
-			sum %= MOD
-			if j > B[i] || j < A[i] {
-				C[j] = 0
-			} else {
-				C[j] = sum
-			}
+type Item struct {
+	cnt, num int
+}
+
+func Solve(a, N int) int {
+	que := make([]Item, 0)
+	memo := make(map[int]int)
+	que = append(que, Item{0, 1})
+	for len(que) > 0 {
+		p := que[0]
+		que = que[1:]
+		if p.num > N*10 || (p.num != 1 && memo[p.num] != 0) {
+			continue
+		}
+		memo[p.num] = p.cnt
+		if p.num == N {
+			return p.cnt
+		}
+		que = append(que, Item{p.cnt + 1, p.num * a})
+		if p.num >= 10 && p.num%10 != 0 {
+			S := strconv.Itoa(p.num)
+			S = S[len(S)-1:] + S[:len(S)-1]
+			num, _ := strconv.Atoi(S)
+			que = append(que, Item{p.cnt + 1, num})
 		}
 	}
-	ret := 0
-	for i := 0; i <= 3000; i++ {
-		ret += C[i]
-		ret %= MOD
-	}
-	return ret
+	return -1
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
