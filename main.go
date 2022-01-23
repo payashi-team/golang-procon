@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 // const (
@@ -14,39 +13,39 @@ import (
 
 func main() {
 	defer _w.Flush()
-	var N, a int
-	fmt.Fscan(_r, &a, &N)
-	ans := Solve(a, N)
-	fmt.Fprintf(_w, "%d\n", ans)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	A := make([]int, M)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	ans := Solve(N, M, A)
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d\n", v)
+	}
 }
 
-type Item struct {
-	cnt, num int
-}
-
-func Solve(a, N int) int {
-	que := make([]Item, 0)
-	memo := make(map[int]int)
-	que = append(que, Item{0, 1})
-	for len(que) > 0 {
-		p := que[0]
-		que = que[1:]
-		if p.num > N*10 || (p.num != 1 && memo[p.num] != 0) {
+func Solve(N, M int, A []int) []int {
+	used := make(map[int]bool)
+	ret := make([]int, N)
+	pos := 0
+	for i := M - 1; i >= 0; i-- {
+		a := A[i]
+		if used[a] {
 			continue
 		}
-		memo[p.num] = p.cnt
-		if p.num == N {
-			return p.cnt
-		}
-		que = append(que, Item{p.cnt + 1, p.num * a})
-		if p.num >= 10 && p.num%10 != 0 {
-			S := strconv.Itoa(p.num)
-			S = S[len(S)-1:] + S[:len(S)-1]
-			num, _ := strconv.Atoi(S)
-			que = append(que, Item{p.cnt + 1, num})
-		}
+		used[A[i]] = true
+		ret[pos] = A[i]
+		pos++
 	}
-	return -1
+	for i := 1; i <= N; i++ {
+		if used[i] {
+			continue
+		}
+		ret[pos] = i
+		pos++
+	}
+	return ret
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
