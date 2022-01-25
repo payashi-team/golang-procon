@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 // const (
@@ -14,57 +13,41 @@ import (
 
 func main() {
 	defer _w.Flush()
-	var K int
-	fmt.Fscan(_r, &K)
-	var S, T string
-	fmt.Fscan(_r, &S, &T)
-	ans := Solve(K, S, T)
-	fmt.Fprintf(_w, "%.8f\n", ans)
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(K int, S, T string) float64 {
-	ret := 0.
-	remain := make(map[int]int)
-	for i := 1; i < 10; i++ {
-		remain[i] = K
-	}
-	for i := 0; i < 4; i++ {
-		num, _ := strconv.Atoi(S[i : i+1])
-		remain[num]--
-		num, _ = strconv.Atoi(T[i : i+1])
-		remain[num]--
-	}
-	for i := 1; i < 10; i++ {
-		for j := 1; j < 10; j++ {
-			var prob int
-			if i == j {
-				prob = remain[i] * (remain[i] - 1)
-			} else {
-				prob = remain[i] * remain[j]
-			}
-			if Score(S, i) > Score(T, j) {
-				ret += float64(prob)
-			}
-		}
-	}
-	ret /= float64(K*9-8) * float64(K*9-9)
-	return ret
-}
-
-func Score(S string, p int) int {
-	S = S[:4] + strconv.Itoa(p)
-	cnt := make(map[int]int)
-	for i := 0; i < 5; i++ {
-		num, _ := strconv.Atoi(S[i : i+1])
-		cnt[num]++
-	}
+func Solve(N int, A []int) int {
 	ret := 0
-	for i := 1; i < 10; i++ {
-		t := i
-		for j := 0; j < cnt[i]; j++ {
-			t *= 10
+	avg := 0
+	for _, v := range A {
+		avg += v
+	}
+	if avg%N != 0 {
+		return -1
+	}
+	avg /= N
+	sum := 0
+	start := -1
+	for i := 0; i < N; i++ {
+		if start < 0 {
+			if A[i] != avg {
+				start = i
+				sum = A[i]
+			}
+		} else {
+			sum += A[i]
+			if sum == avg*(i-start+1) {
+				ret += i - start
+				start = -1
+			}
 		}
-		ret += t
 	}
 	return ret
 }
