@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 // const (
@@ -13,41 +14,45 @@ import (
 
 func main() {
 	defer _w.Flush()
-	var N, A, B int
-	fmt.Fscan(_r, &N, &A, &B)
+	var N, K, M, R int
+	fmt.Fscan(_r, &N, &K, &M, &R)
 	S := make([]int, N)
-	for i := 0; i < N; i++ {
+	for i := 0; i < N-1; i++ {
 		fmt.Fscan(_r, &S[i])
 	}
-	P, Q := Solve(N, A, B, S)
-	if P < 0 {
-		fmt.Fprintf(_w, "-1\n")
-	} else {
-		fmt.Fprintf(_w, "%.8f %.8f\n", P, Q)
-	}
+	ans := Solve(N, K, M, R, S)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, A, B int, S []int) (float64, float64) {
-	A0 := 0.
-	max := -1
-	min := int(1e9)
-	for _, v := range S {
-		if max < v {
-			max = v
+func Solve(N, K, M, R int, S []int) int {
+	sort.Slice(S, func(i, j int) bool { return S[i] > S[j] })
+	if N == K {
+		sum := 0
+		for _, v := range S {
+			sum += v
 		}
-		if min > v {
-			min = v
+		if sum >= K*R {
+			return 0
+		} else if sum+M < K*R {
+			return -1
+		} else {
+			return K*R - sum
 		}
-		A0 += float64(v)
 	}
-	A0 /= float64(N)
-	B0 := float64(max - min)
-	if B0 == 0 {
-		return -1, -1
+	sum:=0
+	for i := 0; i < K; i++ {
+		sum+=S[i]
 	}
-	P := float64(B) / B0
-	Q := float64(A) - P*A0
-	return P, Q
+	if sum>=K*R{
+		return 0
+	}else{
+		X:=K*R-sum+S[K-1]
+		if X>M{
+			return -1
+		}else{
+			return X
+		}
+	}
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
