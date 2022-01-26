@@ -13,43 +13,41 @@ import (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N)
+	var N, A, B int
+	fmt.Fscan(_r, &N, &A, &B)
+	S := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+		fmt.Fscan(_r, &S[i])
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
+	P, Q := Solve(N, A, B, S)
+	if P < 0 {
+		fmt.Fprintf(_w, "-1\n")
+	} else {
+		fmt.Fprintf(_w, "%.8f %.8f\n", P, Q)
+	}
 }
 
-func Solve(N int, A []int) int {
-	ret := 0
-	avg := 0
-	for _, v := range A {
-		avg += v
-	}
-	if avg%N != 0 {
-		return -1
-	}
-	avg /= N
-	sum := 0
-	start := -1
-	for i := 0; i < N; i++ {
-		if start < 0 {
-			if A[i] != avg {
-				start = i
-				sum = A[i]
-			}
-		} else {
-			sum += A[i]
-			if sum == avg*(i-start+1) {
-				ret += i - start
-				start = -1
-			}
+func Solve(N, A, B int, S []int) (float64, float64) {
+	A0 := 0.
+	max := -1
+	min := int(1e9)
+	for _, v := range S {
+		if max < v {
+			max = v
 		}
+		if min > v {
+			min = v
+		}
+		A0 += float64(v)
 	}
-	return ret
+	A0 /= float64(N)
+	B0 := float64(max - min)
+	if B0 == 0 {
+		return -1, -1
+	}
+	P := float64(B) / B0
+	Q := float64(A) - P*A0
+	return P, Q
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
