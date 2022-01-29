@@ -4,75 +4,48 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 const (
 	INF = int(1 << 62)
-
-// MOD = int(1e9 + 7)
-// MOD = 998244353
+	// MOD = int(1e9 + 7)
+	MOD = 998244353
 )
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+	var H, W int
+	fmt.Fscan(_r, &H, &W)
+	S := make([]string, H)
+	for i := 0; i < H; i++ {
+		fmt.Fscan(_r, &S[i])
 	}
-	X := make([]int, M)
-	Y := make([]int, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &X[i], &Y[i])
-	}
-	ans := Solve(N, M, A, X, Y)
+	ans := Solve(H, W, S)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, A, X, Y []int) int {
-	edges := make([][]int, N)
-	for i := 0; i < M; i++ {
-		x := X[i] - 1
-		y := Y[i] - 1
-		edges[x] = append(edges[x], y)
-	}
-	type Rank struct {
-		index, price int
-	}
-	cheap := make([]Rank, N)
-	for i := 0; i < N; i++ {
-		cheap[i] = Rank{i, A[i]}
-	}
-	sort.Slice(cheap, func(i, j int) bool { return cheap[i].price < cheap[j].price })
-	used := make([]bool, N)
-	ret := -INF
-	for _, p := range cheap {
-		que := make([]int, 0)
-		que = append(que, p.index)
-		for len(que) > 0 {
-			u := que[0]
-			que = que[1:]
-			for _, v := range edges[u] {
-				if used[v] {
-					continue
-				} else {
-					used[v] = true
-					que = append(que, v)
-					ret = MaxInt(ret, A[v]-p.price)
-				}
+func Solve(H, W int, S []string) int {
+	ret := 1
+	for k := 0; k <= H+W-2; k++ {
+		var r, b, t int
+		for x := 0; x <= k; x++ {
+			y := k - x
+			if y >= H || x >= W {
+				continue
+			}
+			if S[y][x] == 'R' {
+				r++
+			} else if S[y][x] == 'B' {
+				b++
+			} else {
+				t++
 			}
 		}
-	}
-	return ret
-}
-
-func MaxInt(nums ...int) int {
-	ret := -INF
-	for _, v := range nums {
-		if ret < v {
-			ret = v
+		if r*b > 0 {
+			return 0
+		} else if r+b == 0 {
+			ret *= 2
+			ret %= MOD
 		}
 	}
 	return ret
