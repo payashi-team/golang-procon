@@ -14,38 +14,42 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var H, W int
-	fmt.Fscan(_r, &H, &W)
-	S := make([]string, H)
-	for i := 0; i < H; i++ {
-		fmt.Fscan(_r, &S[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	T := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &T[i])
 	}
-	ans := Solve(H, W, S)
+	ans := Solve(N, T)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(H, W int, S []string) int {
-	ret := 1
-	for k := 0; k <= H+W-2; k++ {
-		var r, b, t int
-		for x := 0; x <= k; x++ {
-			y := k - x
-			if y >= H || x >= W {
-				continue
-			}
-			if S[y][x] == 'R' {
-				r++
-			} else if S[y][x] == 'B' {
-				b++
+func Solve(N int, T []int) int {
+	S := 0
+	for _, v := range T {
+		S += v
+	}
+	dp := make([][]int, N+1)
+	for i := 0; i <= N; i++ {
+		dp[i] = make([]int, S/2+1)
+	}
+	for i := 0; i < N; i++ {
+		for j := 0; j <= S/2; j++ {
+			if j-T[i] >= 0 {
+				dp[i+1][j] = MaxInt(dp[i][j], dp[i][j-T[i]]+T[i])
 			} else {
-				t++
+				dp[i+1][j] = dp[i][j]
 			}
 		}
-		if r*b > 0 {
-			return 0
-		} else if r+b == 0 {
-			ret *= 2
-			ret %= MOD
+	}
+	return S-dp[N][S/2]
+}
+
+func MaxInt(nums ...int) int {
+	ret := -INF
+	for _, v := range nums {
+		if ret < v {
+			ret = v
 		}
 	}
 	return ret
