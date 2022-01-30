@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 const (
@@ -16,41 +17,35 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	T := make([]int, N)
+	A := make([]int, N)
+	B := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &T[i])
+		fmt.Fscan(_r, &A[i], &B[i])
 	}
-	ans := Solve(N, T)
-	fmt.Fprintf(_w, "%d\n", ans)
+	ans := Solve(N, A, B)
+	for i := 1; i <= N; i++ {
+		fmt.Fprintf(_w, "%d ", ans[i])
+	}
+	fmt.Fprintln(_w)
 }
 
-func Solve(N int, T []int) int {
-	S := 0
-	for _, v := range T {
-		S += v
-	}
-	dp := make([][]int, N+1)
-	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, S/2+1)
-	}
-	for i := 0; i < N; i++ {
-		for j := 0; j <= S/2; j++ {
-			if j-T[i] >= 0 {
-				dp[i+1][j] = MaxInt(dp[i][j], dp[i][j-T[i]]+T[i])
-			} else {
-				dp[i+1][j] = dp[i][j]
-			}
-		}
-	}
-	return S-dp[N][S/2]
+type Item struct {
+	date, value int
 }
 
-func MaxInt(nums ...int) int {
-	ret := -INF
-	for _, v := range nums {
-		if ret < v {
-			ret = v
-		}
+func Solve(N int, A, B []int) map[int]int {
+	items := make([]Item, N*2)
+	for i := 0; i < N; i++ {
+		items[i*2] = Item{A[i], 1}
+		items[i*2+1] = Item{A[i] + B[i], -1}
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].date < items[j].date })
+	ret := make(map[int]int)
+	cur := Item{1, 0}
+	for _, item := range items {
+		ret[cur.value] += item.date - cur.date
+		cur.value += item.value
+		cur.date = item.date
 	}
 	return ret
 }
