@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 const (
@@ -18,34 +17,60 @@ func main() {
 	var N int
 	fmt.Fscan(_r, &N)
 	A := make([]int, N)
-	B := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, A, B)
-	for i := 1; i <= N; i++ {
-		fmt.Fprintf(_w, "%d ", ans[i])
-	}
-	fmt.Fprintln(_w)
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-type Item struct {
-	date, value int
+type UnionFind struct {
+	par, dep []int
 }
 
-func Solve(N int, A, B []int) map[int]int {
-	items := make([]Item, N*2)
-	for i := 0; i < N; i++ {
-		items[i*2] = Item{A[i], 1}
-		items[i*2+1] = Item{A[i] + B[i], -1}
+func (uf *UnionFind) Root(x int) int {
+	if uf.par[x] == x {
+		return x
 	}
-	sort.Slice(items, func(i, j int) bool { return items[i].date < items[j].date })
-	ret := make(map[int]int)
-	cur := Item{1, 0}
-	for _, item := range items {
-		ret[cur.value] += item.date - cur.date
-		cur.value += item.value
-		cur.date = item.date
+	uf.par[x] = uf.par[uf.par[x]]
+	return uf.Root(uf.par[x])
+}
+
+func (uf *UnionFind) Same(a, b int) bool {
+	return uf.Root(a) == uf.Root(b)
+}
+
+func (uf *UnionFind) Unite(a, b int) {
+	a = uf.Root(a)
+	b = uf.Root(b)
+	if uf.Same(a, b) {
+		return
+	}
+	if uf.dep[a] < uf.dep[b] {
+		uf.par[a] = b
+	} else if uf.dep[a] > uf.dep[b] {
+		uf.par[b] = a
+	} else {
+		uf.par[b] = a
+		uf.dep[a]++
+	}
+}
+
+func Solve(N int, A []int) int {
+	uf := new(UnionFind)
+	uf.par = make([]int, int(2e5)+1)
+	uf.dep = make([]int, int(2e5)+1)
+	for i := 0; i <= int(2e5); i++ {
+		uf.par[i] = i
+	}
+	ret := 0
+	for i := 0; i < (N+1)/2; i++ {
+		a := A[i]
+		b := A[N-1-i]
+		if !uf.Same(a, b) {
+			uf.Unite(a, b)
+			ret++
+		}
 	}
 	return ret
 }
