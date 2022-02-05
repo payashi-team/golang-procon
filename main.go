@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 const (
@@ -30,39 +29,45 @@ func main() {
 	}
 }
 
-type Range struct {
-	l, r int
+type UnionFind struct {
+	par, dep []int
+}
+
+func (uf *UnionFind) Root(x int) int {
+	if uf.par[x] == x {
+		return x
+	}
+	uf.par[x] = uf.par[uf.par[x]]
+	return uf.Root(uf.par[x])
+}
+
+func (uf *UnionFind) Unite(a, b int) {
+	a = uf.Root(a)
+	b = uf.Root(b)
+	if a == b {
+		return
+	}
+	if uf.dep[a] < uf.dep[b] {
+		uf.par[a] = b
+	} else {
+		uf.par[b] = a
+		if uf.dep[a] == uf.dep[b] {
+			uf.dep[a]++
+		}
+	}
 }
 
 func Solve(N, Q int, L, R []int) bool {
-	qs := make([]Range, Q)
+	uf := new(UnionFind)
+	uf.par = make([]int, N+1)
+	uf.dep = make([]int, N+1)
+	for i := 0; i <= N; i++ {
+		uf.par[i] = i
+	}
 	for i := 0; i < Q; i++ {
-		qs[i] = Range{L[i] - 1, R[i] - 1}
+		uf.Unite(L[i]-1, R[i])
 	}
-	sort.Slice(qs, func(i, j int) bool {
-		if qs[i].r == qs[j].r {
-			return qs[i].l < qs[j].l
-		} else {
-			return qs[i].r < qs[j].r
-		}
-	})
-	dp := make([]bool, N+1)
-	dp[0] = true
-	pos := 0
-	for i := 0; i < N; i++ {
-		// fmt.Printf("pos: %d\n", pos)
-		for pos < Q && qs[pos].r == i {
-			if dp[qs[pos].l] {
-				dp[i] = true
-			}
-			if dp[i] {
-				dp[qs[pos].l] = true
-			}
-			pos++
-		}
-	}
-	// fmt.Printf("%v\n", dp)
-	return dp[N-1]
+	return uf.Root(0) == uf.Root(N)
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
