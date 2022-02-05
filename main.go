@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
 )
 
 const (
@@ -15,58 +17,44 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	A := make([]int, M)
-	B := make([]int, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+	b := make(map[int]int)
+	for i := 0; i < 10; i++ {
+		var tmp int
+		fmt.Scan(&tmp)
+		b[tmp] = i
 	}
-	ans := Solve(N, M, A, B)
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	ans := Solve(b, N, A)
 	for _, v := range ans {
 		fmt.Fprintf(_w, "%d\n", v)
 	}
 }
 
-func Solve(N, M int, A, B []int) []int {
-	dist := make([][]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			dist[i][j] = INF
-		}
-		dist[i][i] = 0
-	}
-	for i := 0; i < M; i++ {
-		a := A[i] - 1
-		b := B[i] - 1
-		dist[a][b] = 1
-		dist[b][a] = 1
-	}
-	for k := 0; k < N; k++ {
-		for i := 0; i < N; i++ {
-			for j := 0; j < N; j++ {
-				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
-			}
-		}
-	}
-	ret := make([]int, N)
-	for i := 0; i < N; i++ {
-		for j := 0; j < N; j++ {
-			if dist[i][j] == 2 {
-				ret[i]++
-			}
-		}
-	}
-	return ret
+type Item struct {
+	normal, abnormal int
 }
 
-func MinInt(nums ...int) int {
-	ret := INF
-	for _, v := range nums {
-		if ret > v {
-			ret = v
+func Solve(b map[int]int, N int, A []int) []int {
+	B := make([]Item, N)
+	for i := 0; i < N; i++ {
+		abnormal := strconv.Itoa(A[i])
+		normal := 0
+		for _, c := range abnormal {
+			v, _ := strconv.Atoi(string(c))
+			normal *= 10
+			normal += b[v]
 		}
+		B[i] = Item{normal, A[i]}
+	}
+	sort.Slice(B, func(i, j int) bool { return B[i].normal < B[j].normal })
+	ret := make([]int, N)
+	for i := 0; i < N; i++ {
+		ret[i] = B[i].abnormal
 	}
 	return ret
 }
