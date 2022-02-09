@@ -3,45 +3,59 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"os"
 )
 
 const (
-	// INF = int(1 << 60)
+	INF = int(1 << 60)
 	// MOD = int(1e9 + 7)
 	MOD = 998244353
 )
 
-var Dirs = []string{
-	"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
-}
-var Ws = []float64{
-	0.2, 1.5, 3.3, 5.4, 7.9, 10.7, 13.8, 17.1, 20.7, 24.4, 28.4, 32.6,
-}
-
 func main() {
 	defer _w.Flush()
-	var Deg, Dis int
-	fmt.Fscan(_r, &Deg, &Dis)
-	Dir, W := Solve(Deg, Dis)
-	fmt.Fprintf(_w, "%s %d\n", Dir, W)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	dist := make([][]int, N)
+	for i := 0; i < N; i++ {
+		dist[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			dist[i][j] = INF
+		}
+		dist[i][i] = 0
+	}
+	for i := 0; i < M; i++ {
+		var a, b, c int
+		fmt.Fscan(_r, &a, &b, &c)
+		dist[a-1][b-1] = c
+	}
+	ans := Solve(N, M, dist)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(Deg, Dis int) (string, int) {
-	Dir := Dirs[int(math.Floor((float64(Deg)*0.1+11.25)/22.5))%16]
-	wind := math.Round(float64(Dis)/60.*10) / 10.
-	W := 12
-	for i, w := range Ws {
-		if wind <= w {
-			W = i
-			break
+func Solve(N, M int, dist [][]int) int {
+	ret := 0
+	for k := 0; k < N; k++ {
+		for i := 0; i < N; i++ {
+			for j := 0; j < N; j++ {
+				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
+				if dist[i][j] != INF {
+					ret += dist[i][j]
+				}
+			}
 		}
 	}
-	if W == 0 {
-		Dir = "C"
+	return ret
+}
+
+func MinInt(nums ...int) int {
+	ret := INF
+	for _, v := range nums {
+		if ret > v {
+			ret = v
+		}
 	}
-	return Dir, W
+	return ret
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
