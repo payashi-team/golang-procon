@@ -14,44 +14,57 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	dist := make([][]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			dist[i][j] = INF
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([][]int, 2*N)
+	for i := 0; i < 2*N; i++ {
+		A[i] = make([]int, 2*N)
+	}
+	for i := 0; i < 2*N-1; i++ {
+		for j := i + 1; j < 2*N; j++ {
+			fmt.Fscan(_r, &A[i][j])
+			A[j][i] = A[i][j]
 		}
-		dist[i][i] = 0
 	}
-	for i := 0; i < M; i++ {
-		var a, b, c int
-		fmt.Fscan(_r, &a, &b, &c)
-		dist[a-1][b-1] = c
-	}
-	ans := Solve(N, M, dist)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, dist [][]int) int {
-	ret := 0
-	for k := 0; k < N; k++ {
-		for i := 0; i < N; i++ {
-			for j := 0; j < N; j++ {
-				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
-				if dist[i][j] != INF {
-					ret += dist[i][j]
-				}
+func Solve(N int, A [][]int) int {
+	var dfs func(int, []bool) int
+	dfs = func(score int, used []bool) int {
+		pos := -1
+		for i, v := range used {
+			if !v {
+				pos = i
+				break
 			}
 		}
+		if pos < 0 {
+			// fmt.Printf("used: %v, score: %d\n", used, score)
+			return score
+		}
+		used[pos] = true
+		ret := 0
+		for i := 0; i < 2*N; i++ {
+			if used[i] {
+				continue
+			}
+			used[i] = true
+			ret = MaxInt(ret, dfs(score^A[pos][i], used))
+			used[i] = false
+		}
+		used[pos] = false
+		return ret
 	}
-	return ret
+	used := make([]bool, 2*N)
+	return dfs(0, used)
 }
 
-func MinInt(nums ...int) int {
-	ret := INF
+func MaxInt(nums ...int) int {
+	ret := 0
 	for _, v := range nums {
-		if ret > v {
+		if ret < v {
 			ret = v
 		}
 	}
