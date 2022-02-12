@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 const (
@@ -15,50 +14,43 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	H := make([]int, N)
-	W := make([]int, M)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &H[i])
-	}
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &W[i])
-	}
-	ans := Solve(N, M, H, W)
+	var N int
+	fmt.Fscan(_r, &N)
+	var S, T []byte
+	fmt.Fscan(_r, &S, &T)
+	ans := Solve(N, S, T)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, H, W []int) int {
-	sort.Ints(H)
-	SumEvens := make([]int, N/2+1) // (0, 1) +... (2*k+2, 2*k+3)
-	for i := 1; 2*i-1 < N; i++ {
-		SumEvens[i] = SumEvens[i-1] + H[2*i-1] - H[2*i-2]
-	}
-	SumOdds := make([]int, N/2+1) // (1, 2) + ... (2*k-1, 2*k)
-	for i := 1; 2*i < N; i++ {
-		SumOdds[i] = SumOdds[i-1] + H[2*i] - H[2*i-1]
-	}
-	ret := INF
-	for _, w := range W {
-		idx := sort.SearchInts(H, w)
-		diff := SumEvens[idx/2] + SumOdds[N/2] - SumOdds[idx/2]
-		if idx&1 == 0 {
-			diff += H[idx] - w
+func Solve(N int, S, T []byte) int {
+	for i := 1; i < N; i++ {
+		if (S[i-1] == '0') == (S[i] == '1') {
+			S[i] = '1'
 		} else {
-			diff += w - H[idx-1]
+			S[i] = '0'
 		}
-		ret = MinInt(ret, diff)
+		if (T[i-1] == '0') == (T[i] == '1') {
+			T[i] = '1'
+		} else {
+			T[i] = '0'
+		}
 	}
-	return ret
-}
-
-func MinInt(nums ...int) int {
-	ret := INF
-	for _, v := range nums {
-		if ret > v {
-			ret = v
+	ret := 0
+	for i, j := 0, 0; i < N; i++ {
+		if i > j {
+			j = i
 		}
+		if S[j] == T[i] {
+			continue
+		}
+		for j+1 < N && S[j] == S[j+1] {
+			j++
+		}
+		if j+1 == N {
+			return -1
+		}
+		j++
+		ret += j - i
 	}
 	return ret
 }
