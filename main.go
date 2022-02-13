@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 )
 
 const (
@@ -15,42 +14,60 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var K, N, M int
-	fmt.Fscan(_r, &K, &N, &M)
-	A := make([]int, K)
-	for i := 0; i < K; i++ {
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(K, N, M, A)
-	for i := 0; i < K; i++ {
-		fmt.Fprintf(_w, "%d ", ans[i].value)
-	}
-	fmt.Fprintln(_w)
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-type Item struct {
-	idx, value, remain int
+func Solve(N int, A []int) int {
+	cost := make([]int, 32)
+	bitcnts := make([]int, 32)
+	for _, num := range A {
+		digit := 0
+		for num > 0 {
+			if num&1 == 1 {
+				bitcnts[digit]++
+			}
+			digit++
+			num /= 2
+		}
+	}
+	bigness := 1
+	for i := 0; i < 32; i++ {
+		cost[i] = (N - 2*bitcnts[i]) * bigness
+		bigness *= 2
+	}
+	ret := 0
+	for _, num := range A {
+		score := 0
+		digit := 0
+		for num > 0 {
+			if num&1 == 1 {
+				score += cost[digit]
+			}
+			digit++
+			num /= 2
+		}
+		ret = MaxInt(ret, score)
+	}
+	for _, num := range A {
+		ret += num
+	}
+	return ret
 }
 
-// Ci = Ai * (M/N) (float64)
-// max|Bi - Ci|を最小化すればよい
-// p <= Ci < q (p, qは整数)
-// sum(p) <= M < sum(q)
-// すべてのBiにpかqを選んだとき max|Bi - Ci| < 1
-// Biにpでもqでもない数を一つでも選んだとき |Bi - Ci| >= 1
-
-func Solve(K, N, M int, A []int) []Item {
-	more := M
-	ret := make([]Item, K)
-	for i := 0; i < K; i++ {
-		ret[i] = Item{i, (A[i] * M) / N, (A[i] * M) % N}
-		more -= ret[i].value
+func MaxInt(nums ...int) int {
+	ret := 0
+	for _, v := range nums {
+		if ret < v {
+			ret = v
+		}
 	}
-	sort.Slice(ret, func(i, j int) bool { return ret[i].remain > ret[j].remain })
-	for i := 0; i < more; i++ {
-		ret[i].value++
-	}
-	sort.Slice(ret, func(i, j int) bool { return ret[i].idx < ret[j].idx })
 	return ret
 }
 
