@@ -43,14 +43,14 @@ type Item struct {
 
 type PQueue []*Item
 
+func (pq PQueue) Len() int {
+	return len(pq)
+}
+
 func (pq PQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
 	pq[i].index = i
 	pq[j].index = j
-}
-
-func (pq PQueue) Len() int {
-	return len(pq)
 }
 
 func (pq PQueue) Less(i, j int) bool {
@@ -76,7 +76,7 @@ func (pq *PQueue) Pop() interface{} {
 func Solve(N int, edges [][]int) []int {
 	pq := make(PQueue, 0)
 	heap.Init(&pq)
-	heap.Push(&pq, &Item{0, -0, -1})
+	heap.Push(&pq, &Item{0, 0, -1})
 	ret := make([]int, 0)
 	used := make([]bool, N)
 	for pq.Len() > 0 {
