@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"os"
 )
@@ -16,57 +17,81 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	A := make([]int, N)
+	edges := make([][]int, N)
+	for i := 0; i < N-1; i++ {
+		var a, b int
+		fmt.Fscan(_r, &a, &b)
+		a--
+		b--
+		edges[a] = append(edges[a], b)
+		edges[b] = append(edges[b], a)
+	}
+	ans := Solve(N, edges)
+	for i, num := range ans {
+		fmt.Fprintf(_w, "%d", num)
+		if i == N-1 {
+			fmt.Fprintln(_w)
+		} else {
+			fmt.Fprintf(_w, " ")
+		}
+	}
+}
+
+type Item struct {
+	value, priority, index int
+}
+
+type PQueue []*Item
+
+func (pq PQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
+}
+
+func (pq PQueue) Len() int {
+	return len(pq)
+}
+
+func (pq PQueue) Less(i, j int) bool {
+	return pq[i].priority > pq[j].priority
+}
+
+func (pq *PQueue) Push(x interface{}) {
+	item := x.(*Item)
+	item.index = len(*pq)
+	*pq = append(*pq, item)
+}
+
+func (pq *PQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil
+	item.index = -1
+	*pq = old[0 : n-1]
+	return item
+}
+
+func Solve(N int, edges [][]int) []int {
+	pq := make(PQueue, 0)
+	heap.Init(&pq)
+	heap.Push(&pq, &Item{0, -0, -1})
+	ret := make([]int, 0)
+	used := make([]bool, N)
+	for pq.Len() > 0 {
+		p := heap.Pop(&pq).(*Item)
+		used[p.value] = true
+		ret = append(ret, p.value)
+		for _, v := range edges[p.value] {
+			if used[v] {
+				continue
+			}
+			heap.Push(&pq, &Item{v, -v, -1})
+		}
+	}
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
-	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
-}
-
-func Solve(N int, A []int) int {
-	cost := make([]int, 32)
-	bitcnts := make([]int, 32)
-	for _, num := range A {
-		digit := 0
-		for num > 0 {
-			if num&1 == 1 {
-				bitcnts[digit]++
-			}
-			digit++
-			num /= 2
-		}
-	}
-	bigness := 1
-	for i := 0; i < 32; i++ {
-		cost[i] = (N - 2*bitcnts[i]) * bigness
-		bigness *= 2
-	}
-	ret := 0
-	for _, num := range A {
-		score := 0
-		digit := 0
-		for num > 0 {
-			if num&1 == 1 {
-				score += cost[digit]
-			}
-			digit++
-			num /= 2
-		}
-		ret = MaxInt(ret, score)
-	}
-	for _, num := range A {
-		ret += num
-	}
-	return ret
-}
-
-func MaxInt(nums ...int) int {
-	ret := 0
-	for _, v := range nums {
-		if ret < v {
-			ret = v
-		}
+		ret[i]++
 	}
 	return ret
 }
