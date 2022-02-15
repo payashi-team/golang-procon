@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"os"
 )
@@ -15,85 +14,38 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	edges := make([][]int, N)
-	for i := 0; i < N-1; i++ {
-		var a, b int
-		fmt.Fscan(_r, &a, &b)
-		a--
-		b--
-		edges[a] = append(edges[a], b)
-		edges[b] = append(edges[b], a)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
+	L := make([]int, K)
+	R := make([]int, K)
+	for i := 0; i < K; i++ {
+		fmt.Fscan(_r, &L[i], &R[i])
 	}
-	ans := Solve(N, edges)
-	for i, num := range ans {
-		fmt.Fprintf(_w, "%d", num)
-		if i == N-1 {
-			fmt.Fprintln(_w)
-		} else {
-			fmt.Fprintf(_w, " ")
+	ans := Solve(N, K, L, R)
+	fmt.Fprintf(_w, "%d\n", ans)
+}
+
+func Solve(N, K int, L, R []int) int {
+	dp := make([]int, N)
+	sdp := make([]int, N+1)
+	dp[N-1] = 1
+	sdp[1] = dp[N-1]
+	getSdp := func(i int) int {
+		if N-i < 0 {
+			return sdp[0]
 		}
+		return sdp[N-i]
 	}
-}
-
-type Item struct {
-	value, priority, index int
-}
-
-type PQueue []*Item
-
-func (pq PQueue) Len() int {
-	return len(pq)
-}
-
-func (pq PQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq PQueue) Less(i, j int) bool {
-	return pq[i].priority > pq[j].priority
-}
-
-func (pq *PQueue) Push(x interface{}) {
-	item := x.(*Item)
-	item.index = len(*pq)
-	*pq = append(*pq, item)
-}
-
-func (pq *PQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil
-	item.index = -1
-	*pq = old[0 : n-1]
-	return item
-}
-
-func Solve(N int, edges [][]int) []int {
-	pq := make(PQueue, 0)
-	heap.Init(&pq)
-	heap.Push(&pq, &Item{0, 0, -1})
-	ret := make([]int, 0)
-	used := make([]bool, N)
-	for pq.Len() > 0 {
-		p := heap.Pop(&pq).(*Item)
-		used[p.value] = true
-		ret = append(ret, p.value)
-		for _, v := range edges[p.value] {
-			if used[v] {
-				continue
-			}
-			heap.Push(&pq, &Item{v, -v, -1})
+	for i := N - 2; i >= 0; i-- {
+		for k := 0; k < K; k++ {
+			l, r := L[k], R[k]
+			dp[i] += (getSdp(i+l) - getSdp(i+r+1) + MOD) % MOD
+			dp[i] %= MOD
 		}
+		sdp[N-i] = sdp[N-i-1] + dp[i]
+		sdp[N-i] %= MOD
 	}
-	for i := 0; i < N; i++ {
-		ret[i]++
-	}
-	return ret
+	return dp[0]
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
