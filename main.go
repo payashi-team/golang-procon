@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 )
 
 const (
@@ -14,34 +15,37 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N+1)
-	for i := 0; i <= N; i++ {
-		fmt.Fscan(_r, &A[i])
+	var T int
+	fmt.Fscan(_r, &T)
+	R := make([]int, T)
+	G := make([]int, T)
+	B := make([]int, T)
+	for i := 0; i < T; i++ {
+		fmt.Fscan(_r, &R[i], &G[i], &B[i])
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
+	ans := Solve(T, R, G, B)
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d\n", v)
+	}
 }
 
-func Solve(N int, A []int) int {
-	curDep := 0
-	maxSlot := 2
-	curSlot := maxSlot
-	ret := 1
-	for i := 0; i <= N; i++ {
-		a := A[i]
-		for a > 0 {
-			cnt := MinInt(curSlot, a)
-			fmt.Printf("(%d - %d) x%d\n", i, curDep, cnt)
-			ret += cnt * (i - curDep)
-			a -= cnt
-			curSlot -= cnt
-			if curSlot == 0 {
-				curDep++
-				maxSlot *= 2
-				curSlot = maxSlot
-			}
+func Solve(T int, R, G, B []int) []int {
+	ret := make([]int, T)
+	for i := 0; i < T; i++ {
+		ret[i] = INF
+		arr := []int{R[i], G[i], B[i]}
+		sort.Ints(arr)
+		if (arr[2]-arr[1])%3 == 0 {
+			ret[i] = MinInt(ret[i], arr[2])
+		}
+		if (arr[2]-arr[0])%3 == 0 {
+			ret[i] = MinInt(ret[i], arr[2])
+		}
+		if (arr[1]-arr[0])%3 == 0 {
+			ret[i] = MinInt(ret[i], arr[1])
+		}
+		if ret[i] == INF {
+			ret[i] = -1
 		}
 	}
 	return ret
