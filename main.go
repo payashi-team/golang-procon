@@ -9,8 +9,8 @@ import (
 
 const (
 	INF = int(1 << 61)
-	// MOD = int(1e9 + 7)
-	MOD = 998244353
+	MOD = int(1e9 + 7)
+	// MOD = 998244353
 )
 
 type Point struct {
@@ -21,42 +21,29 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	P := make([]Point, N)
+	var S string
+	fmt.Fscan(_r, &S)
+	T := make([]string, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &P[i].x, &P[i].y, &P[i].z)
+		fmt.Fscan(_r, &T[i])
 	}
-	ans := Solve(N, P)
+	ans := Solve(N, S, T)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, P []Point) int {
-	dp := make([][]int, 1<<N)
-	for i := 0; i < 1<<N; i++ {
-		dp[i] = make([]int, N)
+func Solve(N int, S string, T []string) int {
+	dp := make([]int, len(S)+1)
+	dp[0] = 1
+	for i := 1; i <= len(S); i++ {
 		for j := 0; j < N; j++ {
-			dp[i][j] = INF
-		}
-	}
-	dist := make([][]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = make([]int, N)
-		a := P[i]
-		for j := 0; j < N; j++ {
-			b := P[j]
-			dist[i][j] = AbsInt(a.x-b.x) + AbsInt(a.y-b.y) + MaxInt(0, b.z-a.z)
-		}
-	}
-	dp[1<<N-1][0] = 0
-	for i := 1<<N - 2; i >= 0; i-- {
-		for u := 0; u < N; u++ {
-			for v := 0; v < N; v++ {
-				if (i>>u)&1 == 0 {
-					dp[i][v] = MinInt(dp[i][v], dp[i|(1<<u)][u]+dist[v][u])
-				}
+			d := len(T[j])
+			if i-d >= 0 && S[i-d:i] == T[j] {
+				dp[i] += dp[i-d]
+				dp[i] %= MOD
 			}
 		}
 	}
-	return dp[0][0]
+	return dp[len(S)]
 }
 
 func AbsInt(x int) int {
