@@ -13,42 +13,65 @@ const (
 	MOD = 998244353
 )
 
+type Point struct {
+	x, y, z int
+}
+
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
-	S := make([]int, N)
+	var N int
+	fmt.Fscan(_r, &N)
+	P := make([]Point, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &S[i])
+		fmt.Fscan(_r, &P[i].x, &P[i].y, &P[i].z)
 	}
-	ans := Solve(N, K, S)
+	ans := Solve(N, P)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, S []int) int {
-	min := INF
-	for _, v := range S {
-		min = MinInt(min, v)
-	}
-	if min == 0 {
-		return N
-	} else if K == 0 {
-		return 0
-	}
-	r := 0
-	cur := 1
-	ret := 0
-	for l := 0; l < N; l++ {
-		for r < N && cur*S[r] <= K {
-			cur *= S[r]
-			r++
+func Solve(N int, P []Point) int {
+	dp := make([][]int, 1<<N)
+	for i := 0; i < 1<<N; i++ {
+		dp[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			dp[i][j] = INF
 		}
-		// fmt.Printf("[%d, %d): %d\n", l, r, cur)
-		ret = -MinInt(-ret, -(r - l))
-		if l == r {
-			r++
-		} else {
-			cur /= S[l]
+	}
+	dist := make([][]int, N)
+	for i := 0; i < N; i++ {
+		dist[i] = make([]int, N)
+		a := P[i]
+		for j := 0; j < N; j++ {
+			b := P[j]
+			dist[i][j] = AbsInt(a.x-b.x) + AbsInt(a.y-b.y) + MaxInt(0, b.z-a.z)
+		}
+	}
+	dp[1<<N-1][0] = 0
+	for i := 1<<N - 2; i >= 0; i-- {
+		for u := 0; u < N; u++ {
+			for v := 0; v < N; v++ {
+				if (i>>u)&1 == 0 {
+					dp[i][v] = MinInt(dp[i][v], dp[i|(1<<u)][u]+dist[v][u])
+				}
+			}
+		}
+	}
+	return dp[0][0]
+}
+
+func AbsInt(x int) int {
+	if x < 0 {
+		return -x
+	} else {
+		return x
+	}
+}
+
+func MaxInt(nums ...int) int {
+	ret := -1
+	for _, v := range nums {
+		if ret < v {
+			ret = v
 		}
 	}
 	return ret
