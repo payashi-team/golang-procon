@@ -13,37 +13,33 @@ const (
 	// MOD = 998244353
 )
 
-type Point struct {
-	x, y, z int
-}
-
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	var S string
-	fmt.Fscan(_r, &S)
-	T := make([]string, N)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
+	A := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &T[i])
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, S, T)
+	ans := Solve(N, K, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, S string, T []string) int {
-	dp := make([]int, len(S)+1)
-	dp[0] = 1
-	for i := 1; i <= len(S); i++ {
-		for j := 0; j < N; j++ {
-			d := len(T[j])
-			if i-d >= 0 && S[i-d:i] == T[j] {
-				dp[i] += dp[i-d]
-				dp[i] %= MOD
-			}
+func Solve(N, K int, A []int) int {
+	l, r := 0.5, float64(1e9)+1
+	for r-l > 1e-5 {
+		mid := (l + r) / 2
+		cnt := 0
+		for i := 0; i < N; i++ {
+			cnt += int(math.Ceil(float64(A[i])/mid)) - 1
+		}
+		if cnt > K {
+			l = mid
+		} else {
+			r = mid
 		}
 	}
-	return dp[len(S)]
+	return int(math.Ceil(math.Round(r*(1e4)) / (1e4)))
 }
 
 func AbsInt(x int) int {
