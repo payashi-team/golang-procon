@@ -15,31 +15,34 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
-	A := make([]int, N)
+	var N int
+	fmt.Fscan(_r, &N)
+	P := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+		fmt.Fscan(_r, &P[i])
 	}
-	ans := Solve(N, K, A)
+	ans := Solve(N, P)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, A []int) int {
-	l, r := 0.5, float64(1e9)+1
-	for r-l > 1e-5 {
-		mid := (l + r) / 2
-		cnt := 0
-		for i := 0; i < N; i++ {
-			cnt += int(math.Ceil(float64(A[i])/mid)) - 1
-		}
-		if cnt > K {
-			l = mid
+func Solve(N int, P []int) int {
+	Q := make([]int, N)
+	for i := 0; i < N; i++ {
+		Q[P[i]-1] = i
+	}
+	ret := -1
+	cnt := 1
+	for i := 1; i < N; i++ {
+		if Q[i] > Q[i-1] {
+			cnt++
 		} else {
-			r = mid
+			ret = MaxInt(ret, cnt)
+			cnt = 1
 		}
 	}
-	return int(math.Ceil(math.Round(r*(1e4)) / (1e4)))
+	ret = MaxInt(ret, cnt)
+	ret = N - ret
+	return ret
 }
 
 func AbsInt(x int) int {
