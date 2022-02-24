@@ -13,36 +13,45 @@ const (
 	// MOD = 998244353
 )
 
+type Edge struct {
+	a, b int
+}
+
 func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	P := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &P[i])
+	M, E := Solve(N)
+	fmt.Fprintf(_w, "%d\n", M)
+	for _, e := range E {
+		fmt.Fprintf(_w, "%d %d\n", e.a, e.b)
 	}
-	ans := Solve(N, P)
-	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, P []int) int {
-	Q := make([]int, N)
-	for i := 0; i < N; i++ {
-		Q[P[i]-1] = i
+func Solve(N int) (int, []Edge) {
+	odd := N&1 == 1
+	if odd {
+		N--
 	}
-	ret := -1
-	cnt := 1
-	for i := 1; i < N; i++ {
-		if Q[i] > Q[i-1] {
-			cnt++
-		} else {
-			ret = MaxInt(ret, cnt)
-			cnt = 1
+	M := N * (N - 2) / 2
+	E := make([]Edge, M)
+	cur := 0
+	for i := 1; i <= N; i++ {
+		for j := i + 1; j <= N; j++ {
+			if i+j == N+1 {
+				continue
+			}
+			E[cur] = Edge{i, j}
+			cur++
 		}
 	}
-	ret = MaxInt(ret, cnt)
-	ret = N - ret
-	return ret
+	if odd {
+		M += N
+		for i := 1; i <= N; i++ {
+			E = append(E, Edge{i, N + 1})
+		}
+	}
+	return M, E
 }
 
 func AbsInt(x int) int {
