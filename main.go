@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -13,45 +14,45 @@ const (
 	// MOD = 998244353
 )
 
-type Edge struct {
-	a, b int
-}
-
 func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	M, E := Solve(N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	M, ops := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", M)
-	for _, e := range E {
-		fmt.Fprintf(_w, "%d %d\n", e.a, e.b)
+	for _, op := range ops {
+		fmt.Fprintf(_w, "%d %d\n", op.x, op.y)
 	}
 }
 
-func Solve(N int) (int, []Edge) {
-	odd := N&1 == 1
-	if odd {
-		N--
+type Op struct {
+	x, y int
+}
+
+func Solve(N int, A []int) (int, []Op) {
+	sort.Ints(A)
+	m := sort.SearchInts(A, 0) - 1
+	if m == N-1 {
+		m--
+	} else if m == -1 {
+		m++
 	}
-	M := N * (N - 2) / 2
-	E := make([]Edge, M)
-	cur := 0
-	for i := 1; i <= N; i++ {
-		for j := i + 1; j <= N; j++ {
-			if i+j == N+1 {
-				continue
-			}
-			E[cur] = Edge{i, j}
-			cur++
-		}
+	ret := 0
+	ops := make([]Op, N-1)
+	for i := m + 1; i < N-1; i++ {
+		ops[i-(m+1)] = Op{A[m], A[i]}
+		A[m] -= A[i]
 	}
-	if odd {
-		M += N
-		for i := 1; i <= N; i++ {
-			E = append(E, Edge{i, N + 1})
-		}
+	for i := 0; i <= m; i++ {
+		ops[i+N-2-m] = Op{A[N-1], A[i]}
+		A[N-1] -= A[i]
 	}
-	return M, E
+	ret = A[N-1]
+	return ret, ops
 }
 
 func AbsInt(x int) int {
