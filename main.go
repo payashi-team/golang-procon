@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -16,43 +15,24 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
-	}
-	M, ops := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", M)
-	for _, op := range ops {
-		fmt.Fprintf(_w, "%d %d\n", op.x, op.y)
+	var N, A, B int
+	fmt.Fscan(_r, &N, &A, &B)
+	ans := Solve(N, A, B)
+	if ans {
+		fmt.Fprintf(_w, "Takahashi\n")
+	} else {
+		fmt.Fprintf(_w, "Aoki\n")
 	}
 }
 
-type Op struct {
-	x, y int
-}
-
-func Solve(N int, A []int) (int, []Op) {
-	sort.Ints(A)
-	m := sort.SearchInts(A, 0) - 1
-	if m == N-1 {
-		m--
-	} else if m == -1 {
-		m++
+func Solve(N, A, B int) bool {
+	if A == B {
+		return N%(A+1) != 0
+	} else if A > B {
+		return true
+	} else {
+		return N <= A
 	}
-	ret := 0
-	ops := make([]Op, N-1)
-	for i := m + 1; i < N-1; i++ {
-		ops[i-(m+1)] = Op{A[m], A[i]}
-		A[m] -= A[i]
-	}
-	for i := 0; i <= m; i++ {
-		ops[i+N-2-m] = Op{A[N-1], A[i]}
-		A[N-1] -= A[i]
-	}
-	ret = A[N-1]
-	return ret, ops
 }
 
 func AbsInt(x int) int {
