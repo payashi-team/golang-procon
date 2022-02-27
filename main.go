@@ -15,37 +15,24 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
+	var N int
+	fmt.Fscan(_r, &N)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, K, A)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, A []int) int {
-	sum := make([]int, N+1)
-	pos := 0
-	used := make([]int, N)
+func Solve(N int, A []int) int {
+	M := MaxInt(A...)
+	D := 0
 	for i := 0; i < N; i++ {
-		used[i] = -1
+		D += AbsInt(A[i] - A[(i+1)%N])
 	}
-	for t := 0; t < K; t++ {
-		if used[pos] >= 0 {
-			// the end of the loop
-			p := used[pos]
-			l := t - p
-			lcost := sum[t] - sum[p]
-			a, b := (K-p)/l, (K-p)%l
-			return sum[p] + lcost*a + (sum[p+b] - sum[p])
-		}
-		used[pos] = t
-		sum[t+1] = sum[t] + A[pos]
-		pos = sum[t+1] % N
-	}
-	return sum[K]
+	D /= 2
+	return MaxInt(M,)
 }
 
 func AbsInt(x int) int {
