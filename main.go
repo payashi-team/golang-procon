@@ -15,46 +15,35 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, Q int
-	fmt.Fscan(_r, &N, &Q)
-	X := make([]int, N)
-	R := make([]int, N)
-	H := make([]int, N)
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &X[i], &R[i], &H[i])
+		fmt.Fscan(_r, &A[i])
 	}
-	A := make([]int, Q)
-	B := make([]int, Q)
-	for i := 0; i < Q; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
-	}
-	ans := Solve(N, Q, X, R, H, A, B)
-	for _, v := range ans {
-		fmt.Fprintf(_w, "%.8f\n", v)
-	}
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, Q int, X, R, H, A, B []int) []float64 {
-	volume := make([]float64, int(2e4)+1)
-	for i := 0; i < N; i++ {
-		v := math.Pi * float64(R[i]*R[i]) / (float64(H[i]) * float64(H[i]) * 3.)
-		for j := 0; j < H[i]; j++ {
-			h := float64(H[i] - j)
-			volume[X[i]+j] += v * ((h * h * h) - ((h - 1) * (h - 1) * (h - 1)))
+func Solve(N int, A []int) int {
+	if A[0] != 0 {
+		return -1
+	}
+	st := N
+	ret := 0
+	for pos := N - 1; pos >= 0; {
+		ret += A[pos]
+		tmp := pos - A[pos]
+		if tmp < 0 || st < tmp {
+			return -1
 		}
-	}
-	for i := 1; i <= int(2e4); i++ {
-		volume[i] += volume[i-1]
-	}
-	ans := make([]float64, Q)
-	for i := 0; i < Q; i++ {
-		if A[i] == 0 {
-			ans[i] = volume[B[i]-1]
-		} else {
-			ans[i] = volume[B[i]-1] - volume[A[i]-1]
+		st = tmp
+		for pos >= 1 && A[pos-1] == A[pos]-1 {
+			pos--
 		}
+		pos--
 	}
-	return ans
+	return ret
 }
 
 func AbsInt(x int) int {
