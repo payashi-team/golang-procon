@@ -15,35 +15,39 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
 	A := make([]int, N)
+	B := make([]int, M)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &B[i])
+	}
+	ans := Solve(N, M, A, B)
+	if ans {
+		fmt.Fprintf(_w, "Yes\n")
+	} else {
+		fmt.Fprintf(_w, "No\n")
+	}
 }
 
-func Solve(N int, A []int) int {
-	if A[0] != 0 {
-		return -1
+func Solve(N, M int, A, B []int) bool {
+	cnta := make(map[int]int)
+	cntb := make(map[int]int)
+	for _, v := range A {
+		cnta[v]++
 	}
-	st := N
-	ret := 0
-	for pos := N - 1; pos >= 0; {
-		ret += A[pos]
-		tmp := pos - A[pos]
-		if tmp < 0 || st < tmp {
-			return -1
-		}
-		st = tmp
-		for pos >= 1 && A[pos-1] == A[pos]-1 {
-			pos--
-		}
-		pos--
+	for _, v := range B {
+		cntb[v]++
 	}
-	return ret
+	for k, v := range cntb {
+		if cnta[k] < v {
+			return false
+		}
+	}
+	return true
 }
 
 func AbsInt(x int) int {
