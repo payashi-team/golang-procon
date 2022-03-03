@@ -15,39 +15,74 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
 	A := make([]int, N)
-	B := make([]int, M)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &B[i])
+	ans := Solve(N, K, A)
+	fmt.Fprintf(_w, "%d\n", ans)
+}
+
+type SegTree struct {
+	n     int
+	nodes []int
+}
+
+func NewSegTree(n_ int) *SegTree {
+	st := new(SegTree)
+	n := 1
+	for n < n_ {
+		n *= 2
 	}
-	ans := Solve(N, M, A, B)
-	if ans {
-		fmt.Fprintf(_w, "Yes\n")
-	} else {
-		fmt.Fprintf(_w, "No\n")
+	st.n = n
+	st.nodes = make([]int, 2*n-1)
+	return st
+}
+
+func (st *SegTree) Update(pos, x int) {
+	pos += st.n - 1
+	st.nodes[pos] = x
+	for pos > 0 {
+		par := (pos - 1) / 2
+		sib := 4*par + 3 - pos
+		st.nodes[par] = MaxInt(st.nodes[pos], st.nodes[sib])
+		pos = par
 	}
 }
 
-func Solve(N, M int, A, B []int) bool {
-	cnta := make(map[int]int)
-	cntb := make(map[int]int)
-	for _, v := range A {
-		cnta[v]++
+func (st *SegTree) Query(a, b int) int {
+	if a < 0 {
+		a = 0
 	}
-	for _, v := range B {
-		cntb[v]++
+	if b > st.n {
+		b = st.n
 	}
-	for k, v := range cntb {
-		if cnta[k] < v {
-			return false
+	var query func(int, int, int) int
+	query = func(k, l, r int) int {
+		if a <= l && r <= b {
+			return st.nodes[k]
+		} else if r <= a || b <= l {
+			return 0
+		} else {
+			mid := (l + r) / 2
+			lv := query(2*k+1, l, mid)
+			rv := query(2*k+2, mid, r)
+			return MaxInt(lv, rv)
 		}
 	}
-	return true
+	return query(0, 0, st.n)
+}
+
+func Solve(N, K int, A []int) int {
+	MAX_A := int(3e5)
+	st := NewSegTree(MAX_A + 1)
+	for i := 0; i < N; i++ {
+		max := st.Query(-K+A[i], K+A[i]+1) + 1
+		st.Update(A[i], max)
+	}
+	return st.nodes[0]
 }
 
 func AbsInt(x int) int {
