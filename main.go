@@ -13,38 +13,20 @@ const (
 	// MOD = 998244353
 )
 
-type Query struct {
-	command string
-	n, m    int
-}
-
 func main() {
 	defer _w.Flush()
-	var S string
-	fmt.Fscan(_r, &S)
-	ans:=Solve(S)
-	fmt.Printf("%d\n", ans)
+	var a, b int
+	fmt.Fscan(_r, &a, &b)
+	ans := Solve(a, b)
+	if ans {
+		fmt.Fprintf(_w, "Yes\n")
+	} else {
+		fmt.Fprintf(_w, "No\n")
+	}
 }
 
-func Solve(S string) int {
-	cnt := make(map[rune]int)
-	for _, c := range S {
-		cnt[c]++
-	}
-	var odd, even int
-	for _, v := range cnt {
-		if v%2 == 1 {
-			odd++
-			even += v - 1
-		} else {
-			even += v
-		}
-	}
-	if odd == 0 {
-		return len(S)
-	} else {
-		return (even/2)/odd*2 + 1
-	}
+func Solve(a, b int) bool {
+	return AbsInt(a-b)%8 == 1
 }
 
 func AbsInt(x int) int {
