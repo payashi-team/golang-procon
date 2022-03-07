@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"math"
 	"os"
@@ -14,86 +13,30 @@ const (
 	// MOD = 998244353
 )
 
-type Query struct {
-	c, x int
-}
-
 func main() {
 	defer _w.Flush()
-	var Q int
-	fmt.Fscan(_r, &Q)
-	queries := make([]Query, Q)
-	for i := 0; i < Q; i++ {
-		var c, x int
-		fmt.Fscan(_r, &c)
-		if c == 1 {
-			fmt.Fscan(_r, &x)
-		}
-		queries[i] = Query{c, x}
+	var N int
+	fmt.Fscan(_r, &N)
+	ans := Solve(N)
+	fmt.Fprintf(_w, "%d\n", ans)
+}
 
+func Solve(N int) int {
+	n := float64(N)
+	rt := FloorInt(math.Sqrt(n))
+	ret := 0
+	for i := 1; i <= FloorInt(n/float64(rt+1)); i++ {
+		ret += N / i
 	}
-	Solve(Q, queries)
-}
-
-func Solve(Q int, queries []Query) {
-	que := make([]int, 0)
-	pq := make(PQueue, 0)
-	heap.Init(&pq)
-	for _, q := range queries {
-		switch q.c {
-		case 1:
-			que = append(que, q.x)
-		case 2:
-			if pq.Len() > 0 {
-				item := heap.Pop(&pq).(*Item)
-				fmt.Fprintf(_w, "%d\n", item.val)
-			} else {
-				fmt.Fprintf(_w, "%d\n", que[0])
-				que = que[1:]
-			}
-		case 3:
-			for _, v := range que {
-				heap.Push(&pq, &Item{-v, v, -1})
-			}
-			que = []int{}
-		}
+	for i := 1; i <= rt; i++ {
+		cnt := FloorInt(n/float64(i)) - FloorInt(n/float64(i+1))
+		ret += i * cnt
 	}
+	return ret
 }
 
-type Item struct {
-	priority, val, index int
-}
-
-type PQueue []*Item
-
-func (pq PQueue) Len() int {
-	return len(pq)
-}
-
-func (pq PQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq PQueue) Less(i, j int) bool {
-	return pq[i].priority > pq[j].priority
-}
-
-func (pq *PQueue) Push(x interface{}) {
-	item := x.(*Item)
-	item.index = len(*pq)
-	*pq = append(*pq, item)
-}
-
-func (pq *PQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	item.index = -1
-	old[n-1] = nil
-	*pq = old[:n-1]
-	return item
+func FloorInt(x float64) int {
+	return int(math.Floor(x))
 }
 
 func AbsInt(x int) int {
