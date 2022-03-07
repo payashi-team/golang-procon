@@ -15,28 +15,20 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	ans := Solve(N)
-	fmt.Fprintf(_w, "%d\n", ans)
+	var a, b, c, x int
+	fmt.Fscan(_r, &a, &b, &c, &x)
+	ans := Solve(a, b, c, x)
+	fmt.Fprintf(_w, "%.8f\n", ans)
 }
 
-func Solve(N int) int {
-	n := float64(N)
-	rt := FloorInt(math.Sqrt(n))
-	ret := 0
-	for i := 1; i <= FloorInt(n/float64(rt+1)); i++ {
-		ret += N / i
+func Solve(a, b, c, x int) float64 {
+	if x <= a {
+		return 1
+	} else if x <= b {
+		return float64(c) / float64(b-a)
+	} else {
+		return 0
 	}
-	for i := 1; i <= rt; i++ {
-		cnt := FloorInt(n/float64(i)) - FloorInt(n/float64(i+1))
-		ret += i * cnt
-	}
-	return ret
-}
-
-func FloorInt(x float64) int {
-	return int(math.Floor(x))
 }
 
 func AbsInt(x int) int {
