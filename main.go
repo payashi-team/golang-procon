@@ -15,20 +15,15 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var a, b, c, x int
-	fmt.Fscan(_r, &a, &b, &c, &x)
-	ans := Solve(a, b, c, x)
+	var H int
+	fmt.Fscan(_r, &H)
+	ans := Solve(H)
 	fmt.Fprintf(_w, "%.8f\n", ans)
 }
 
-func Solve(a, b, c, x int) float64 {
-	if x <= a {
-		return 1
-	} else if x <= b {
-		return float64(c) / float64(b-a)
-	} else {
-		return 0
-	}
+func Solve(H int) float64 {
+	h := float64(H)
+	return math.Sqrt(h * (float64(128e5) + h))
 }
 
 func AbsInt(x int) int {
