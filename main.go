@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/bits"
 	"os"
 )
 
@@ -13,63 +14,30 @@ const (
 	// MOD = 998244353
 )
 
-type Point struct {
-	h, w int
-}
-
 func main() {
 	defer _w.Flush()
-	var H, W, M int
-	fmt.Fscan(_r, &H, &W, &M)
-	targets := make([]Point, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &targets[i].h, &targets[i].w)
+	var S string
+	var Q int
+	fmt.Fscan(_r, &S, &Q)
+	T := make([]int, Q)
+	K := make([]int, Q)
+	for i := 0; i < Q; i++ {
+		fmt.Fscan(_r, &T[i], &K[i])
 	}
-	ans := Solve(H, W, M, targets)
-	fmt.Fprintf(_w, "%d\n", ans)
+	Solve(S, Q, T, K)
 }
 
-func Solve(H, W, M int, targets []Point) int {
-	cnth := make([]int, H)
-	cntw := make([]int, W)
-	filled := make(map[Point]bool)
-	for _, t := range targets {
-		cnth[t.h-1]++
-		cntw[t.w-1]++
-		filled[t] = true
+func Solve(S string, Q int, T, K []int) {
+	mp := map[byte]int{'A': 0, 'B': 1, 'C': 2}
+	for i := 0; i < Q; i++ {
+		t := T[i]
+		k := K[i] - 1
+		cnt := mp[S[k>>t]] + t
+		k -= (k >> t) << t
+		cnt += bits.OnesCount(uint(k))
+		cnt %= 3
+		fmt.Fprintf(_w, "%c\n", rune('A'+cnt))
 	}
-	maxh := -1
-	hs := make([]int, 0)
-	for i := 0; i < H; i++ {
-		if cnth[i] >= maxh {
-			if cnth[i] > maxh {
-				hs = []int{}
-			}
-			maxh = cnth[i]
-			hs = append(hs, i)
-		}
-	}
-	maxw := -1
-	ws := make([]int, 0)
-	for i := 0; i < W; i++ {
-		if cntw[i] >= maxw {
-			if cntw[i] > maxw {
-				ws = []int{}
-			}
-			maxw = cntw[i]
-			ws = append(ws, i)
-		}
-	}
-	ret := maxh + maxw - 1
-	for _, h := range hs {
-		for _, w := range ws {
-			if !filled[Point{h + 1, w + 1}] {
-				ret++
-				return ret
-			}
-		}
-	}
-	return ret
 }
 
 func AbsInt(x int) int {
