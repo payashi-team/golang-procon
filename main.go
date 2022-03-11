@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"math"
-	"math/bits"
 	"os"
+	"sort"
 )
 
 const (
@@ -14,29 +14,71 @@ const (
 	// MOD = 998244353
 )
 
-func main() {
-	defer _w.Flush()
-	var S string
-	var Q int
-	fmt.Fscan(_r, &S, &Q)
-	T := make([]int, Q)
-	K := make([]int, Q)
-	for i := 0; i < Q; i++ {
-		fmt.Fscan(_r, &T[i], &K[i])
-	}
-	Solve(S, Q, T, K)
+type Query struct {
+	command string
+	n, m    int
 }
 
-func Solve(S string, Q int, T, K []int) {
-	mp := map[byte]int{'A': 0, 'B': 1, 'C': 2}
+func main() {
+	defer _w.Flush()
+	var Q, L int
+	fmt.Fscan(_r, &Q, &L)
+	Solve(Q, L)
+}
+
+type Item struct {
+	val, acc int
+}
+
+func Solve(Q, L int) {
+	size := 0
+	stack := make([]Item, 0)
+	safe := true
 	for i := 0; i < Q; i++ {
-		t := T[i]
-		k := K[i] - 1
-		cnt := mp[S[k>>t]] + t
-		k -= (k >> t) << t
-		cnt += bits.OnesCount(uint(k))
-		cnt %= 3
-		fmt.Fprintf(_w, "%c\n", rune('A'+cnt))
+		var s string
+		var n, m int
+		fmt.Fscan(_r, &s)
+		if s == "Push" {
+			fmt.Fscan(_r, &n, &m)
+		} else if s == "Pop" {
+			fmt.Fscan(_r, &n)
+		}
+		q := Query{s, n, m}
+		if !safe {
+			continue
+		}
+		if q.command == "Push" {
+			size += q.n
+			if size > L {
+				fmt.Fprintf(_w, "FULL\n")
+				safe = false
+				continue
+			}
+			stack = append(stack, Item{q.m, size})
+		} else if q.command == "Pop" {
+			size -= q.n
+			if size < 0 {
+				fmt.Fprintf(_w, "EMPTY\n")
+				safe = false
+				continue
+			}
+			idx := sort.Search(len(stack), func(j int) bool { return stack[j].acc >= size })
+			stack = stack[:idx+1]
+			stack[idx].acc = size
+		} else if q.command == "Top" {
+			if size == 0 {
+				fmt.Fprintf(_w, "EMPTY\n")
+				safe = false
+				continue
+			}
+			fmt.Fprintf(_w, "%d\n", stack[len(stack)-1].val)
+		} else if q.command == "Size" {
+			fmt.Fprintf(_w, "%d\n", size)
+		}
+		// fmt.Fprintf(_w, "%v\n", stack)
+	}
+	if safe {
+		fmt.Fprintf(_w, "SAFE\n")
 	}
 }
 
