@@ -15,50 +15,38 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var H, W int
-	fmt.Fscan(_r, &H, &W)
-	field := make([]string, H)
-	for i := 0; i < H; i++ {
-		fmt.Fscan(_r, &field[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	B := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(H, W, field)
-	fmt.Fprintf(_w, "%d\n", ans)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &B[i])
+	}
+	a, b := Solve(N, A, B)
+	fmt.Fprintf(_w, "%d\n%d\n", a, b)
 }
 
-func Solve(H, W int, field []string) int {
-	dp := make([][]int, H)
-	r := make([][]int, H)
-	d := make([][]int, H)
-	rd := make([][]int, H)
-	for i := 0; i < H; i++ {
-		dp[i] = make([]int, W)
-		r[i] = make([]int, W)
-		d[i] = make([]int, W)
-		rd[i] = make([]int, W)
+func Solve(N int, A, B []int) (int, int) {
+	mp := make(map[int]int)
+	for i := 0; i < N; i++ {
+		mp[A[i]] = i + 1
 	}
-	dp[H-1][W-1] = 1
-	for h := H - 1; h >= 0; h-- {
-		for w := W - 1; w >= 0; w-- {
-			if (h == H-1 && w == W-1) || field[h][w] == '#' {
-				continue
-			}
-			if w+1 < W && field[h][w+1] != '#' {
-				r[h][w] = r[h][w+1] + dp[h][w+1]
-				r[h][w] %= MOD
-			}
-			if h+1 < H && field[h+1][w] != '#' {
-				d[h][w] = d[h+1][w] + dp[h+1][w]
-				d[h][w] %= MOD
-			}
-			if w+1 < W && h+1 < H && field[h+1][w+1] != '#' {
-				rd[h][w] = rd[h+1][w+1] + dp[h+1][w+1]
-				rd[h][w] %= MOD
-			}
-			dp[h][w] = r[h][w] + d[h][w] + rd[h][w]
-			dp[h][w] %= MOD
+	var a, b int
+	for i := 0; i < N; i++ {
+		v := mp[B[i]]
+		if v == 0 {
+			continue
+		}
+		if v == i+1 {
+			a++
+		} else {
+			b++
 		}
 	}
-	return dp[0][0]
+	return a, b
 }
 
 func AbsInt(x int) int {
