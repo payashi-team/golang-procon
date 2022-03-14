@@ -17,36 +17,48 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	B := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
-	}
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &B[i])
-	}
-	a, b := Solve(N, A, B)
-	fmt.Fprintf(_w, "%d\n%d\n", a, b)
+	ans := Solve(N)
+	fmt.Fprintf(_w, "%s", ans)
 }
 
-func Solve(N int, A, B []int) (int, int) {
-	mp := make(map[int]int)
-	for i := 0; i < N; i++ {
-		mp[A[i]] = i + 1
-	}
-	var a, b int
-	for i := 0; i < N; i++ {
-		v := mp[B[i]]
-		if v == 0 {
-			continue
+func Solve(N int) string {
+	Row := func(pos int) string {
+		ret := ""
+		for i := 0; i < N; i++ {
+			if (i-pos+N)%N < 3 {
+				ret += "#"
+			} else {
+				ret += "."
+			}
 		}
-		if v == i+1 {
-			a++
+		ret += "\n"
+		return ret
+	}
+	ret := ""
+	if N%3 == 0 {
+		for i := 0; i < 3; i++ {
+			for j := 0; j < N/3; j++ {
+				ret += Row(j * 3)
+			}
+		}
+		return ret
+	}
+	arr := make([]int, N)
+	pos := 0
+	for i := 0; i < N; i++ {
+		if pos == N-1 {
+			arr[i] = N - 2
+		} else if pos == N-2 {
+			arr[i] = N - 1
 		} else {
-			b++
+			arr[i] = pos
 		}
+		pos = (pos + 3) % N
 	}
-	return a, b
+	for _, v := range arr {
+		ret += Row(v)
+	}
+	return ret
 }
 
 func AbsInt(x int) int {
@@ -78,3 +90,4 @@ func MinInt(nums ...int) int {
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+
