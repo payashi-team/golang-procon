@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -17,46 +18,62 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	ans := Solve(N)
-	fmt.Fprintf(_w, "%s", ans)
+	R := make([]int, N)
+	H := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &R[i], &H[i])
+	}
+	ans := Solve(N, R, H)
+	for _, res := range ans {
+		fmt.Fprintf(_w, "%d %d %d\n", res.win, res.lose, res.draw)
+	}
 }
 
-func Solve(N int) string {
-	Row := func(pos int) string {
-		ret := ""
-		for i := 0; i < N; i++ {
-			if (i-pos+N)%N < 3 {
-				ret += "#"
-			} else {
-				ret += "."
-			}
-		}
-		ret += "\n"
-		return ret
-	}
-	ret := ""
-	if N%3 == 0 {
-		for i := 0; i < 3; i++ {
-			for j := 0; j < N/3; j++ {
-				ret += Row(j * 3)
-			}
-		}
-		return ret
-	}
-	arr := make([]int, N)
-	pos := 0
+type Result struct {
+	win, lose, draw int
+}
+
+type Player struct {
+	rate, hand, index int
+}
+
+func Solve(N int, R, H []int) []Result {
+	ret := make([]Result, N)
+	ps := make([]Player, N)
 	for i := 0; i < N; i++ {
-		if pos == N-1 {
-			arr[i] = N - 2
-		} else if pos == N-2 {
-			arr[i] = N - 1
-		} else {
-			arr[i] = pos
-		}
-		pos = (pos + 3) % N
+		ps[i] = Player{R[i], H[i] - 1, i}
 	}
-	for _, v := range arr {
-		ret += Row(v)
+	sort.Slice(ps, func(i, j int) bool { return ps[i].rate < ps[j].rate })
+	S := make([][3]int, N)
+	S[0][ps[0].hand]++
+	for i := 1; i < N; i++ {
+		S[i] = S[i-1]
+		S[i][ps[i].hand]++
+	}
+	for i := 0; i < N; i++ {
+		p := ps[i]
+		ub := sort.Search(N, func(j int) bool { return ps[j].rate > p.rate })
+		lb := sort.Search(N, func(j int) bool { return ps[j].rate >= p.rate })
+		r := &ret[p.index]
+		r.win = lb
+		r.lose = N - ub
+		for j := 0; j < 3; j++ {
+			var cnt int
+			if lb == 0 {
+				cnt = S[ub-1][j]
+			} else {
+				cnt = S[ub-1][j] - S[lb-1][j]
+			}
+			switch (p.hand - j + 3) % 3 {
+			case 0:
+				r.draw += cnt
+			case 1:
+				r.lose += cnt
+			case 2:
+				r.win += cnt
+			}
+		}
+		r.draw--
 	}
 	return ret
 }
@@ -90,4 +107,3 @@ func MinInt(nums ...int) int {
 }
 
 var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
-
