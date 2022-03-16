@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -18,64 +17,36 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	R := make([]int, N)
-	H := make([]int, N)
+	C := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &R[i], &H[i])
+		fmt.Fscan(_r, &C[i])
 	}
-	ans := Solve(N, R, H)
-	for _, res := range ans {
-		fmt.Fprintf(_w, "%d %d %d\n", res.win, res.lose, res.draw)
-	}
+	ans := Solve(N, C)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-type Result struct {
-	win, lose, draw int
-}
-
-type Player struct {
-	rate, hand, index int
-}
-
-func Solve(N int, R, H []int) []Result {
-	ret := make([]Result, N)
-	ps := make([]Player, N)
-	for i := 0; i < N; i++ {
-		ps[i] = Player{R[i], H[i] - 1, i}
-	}
-	sort.Slice(ps, func(i, j int) bool { return ps[i].rate < ps[j].rate })
-	S := make([][3]int, N)
-	S[0][ps[0].hand]++
-	for i := 1; i < N; i++ {
-		S[i] = S[i-1]
-		S[i][ps[i].hand]++
-	}
-	for i := 0; i < N; i++ {
-		p := ps[i]
-		ub := sort.Search(N, func(j int) bool { return ps[j].rate > p.rate })
-		lb := sort.Search(N, func(j int) bool { return ps[j].rate >= p.rate })
-		r := &ret[p.index]
-		r.win = lb
-		r.lose = N - ub
-		for j := 0; j < 3; j++ {
-			var cnt int
-			if lb == 0 {
-				cnt = S[ub-1][j]
-			} else {
-				cnt = S[ub-1][j] - S[lb-1][j]
-			}
-			switch (p.hand - j + 3) % 3 {
-			case 0:
-				r.draw += cnt
-			case 1:
-				r.lose += cnt
-			case 2:
-				r.win += cnt
-			}
+func Solve(N int, C []int) int {
+	cnts := make([]int, 0)
+	cnt := 1
+	cur := -1
+	C = append(C, 2)
+	for i := 0; i <= N; i++ {
+		if C[i] == cur {
+			cnt++
+		} else if cur != -1 {
+			cnts = append(cnts, cnt)
+			cnt = 1
 		}
-		r.draw--
+		cur = C[i]
 	}
-	return ret
+	if len(cnts) == 1 {
+		return -1
+	}
+	if C[0] == C[N-1] {
+		cnts[0] += cnts[len(cnts)-1]
+		cnts = cnts[:len(cnts)-1]
+	}
+	return (MaxInt(cnts...) + 1) / 2
 }
 
 func AbsInt(x int) int {
