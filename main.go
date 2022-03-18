@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"math"
+	"math/bits"
 	"os"
 )
 
@@ -14,93 +14,52 @@ const (
 	// MOD = 998244353
 )
 
-type Edge struct {
-	to, cost int
-}
-
-type Item struct {
-	to, cost, priority, index int
-}
-
-type PQueue []*Item
-
 func main() {
 	defer _w.Flush()
-	var N, M, S, T int
-	fmt.Fscan(_r, &N, &M, &S, &T)
-	D := make([][]Edge, N)
-	for i := 0; i < M; i++ {
-		var x, y, d int
-		fmt.Fscan(_r, &x, &y, &d)
-		x--
-		y--
-		D[x] = append(D[x], Edge{y, d})
-		D[y] = append(D[y], Edge{x, d})
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, M, S, T, D)
+	B := make([]int, M)
+	C := make([]int, M)
+	for i := 0; i < M; i++ {
+		var c int
+		fmt.Fscan(_r, &B[i], &c)
+		for j := 0; j < c; j++ {
+			var I int
+			fmt.Fscan(_r, &I)
+			I--
+			C[i] |= 1 << I
+		}
+	}
+	ans := Solve(N, M, A, B, C)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M, S, T int, D [][]Edge) int {
-	S--
-	T--
-	dijkstra := func(s int) []int {
-		ds := make([]int, N)
+func Solve(N, M int, A, B, C []int) int {
+	bit := 1<<9 - 1
+	max := -1
+	for bit < 1<<N {
+		// fmt.Printf("%b\n", bit)
+		score := 0
 		for i := 0; i < N; i++ {
-			ds[i] = INF
-		}
-		ds[s] = 0
-		pq := make(PQueue, 0)
-		heap.Init(&pq)
-		heap.Push(&pq, &Item{s, 0, -0, -1})
-		for pq.Len() > 0 {
-			item := pq.Pop().(*Item)
-			if ds[item.to] < item.cost {
-				continue
-			}
-			for _, e := range D[item.to] {
-				if ds[e.to] > ds[item.to]+e.cost {
-					ds[e.to] = ds[item.to] + e.cost
-					heap.Push(&pq, &Item{e.to, ds[e.to], -ds[e.to], -1})
-				}
+			if (bit>>i)&1 == 1 {
+				score += A[i]
 			}
 		}
-		return ds
-	}
-	d1 := dijkstra(S)
-	d2 := dijkstra(T)
-	for i := 0; i < N; i++ {
-		if d1[i]!=INF &&d1[i] == d2[i] {
-			return i + 1
+		for i := 0; i < M; i++ {
+			if bits.OnesCount(uint(bit&C[i])) >= 3 {
+				score += B[i]
+			}
 		}
+		max = MaxInt(max, score)
+		x := bit & -bit
+		y := bit + x
+		bit = ((bit &^ y) / x >> 1) | y
 	}
-	return -1
-}
-
-func (pq PQueue) Len() int { return len(pq) }
-func (pq PQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-func (pq PQueue) Less(i, j int) bool {
-	return pq[i].priority > pq[j].priority
-}
-
-func (pq *PQueue) Push(x interface{}) {
-	item := x.(*Item)
-	item.index = len(*pq)
-	*pq = append(*pq, item)
-}
-
-func (pq *PQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil
-	item.index = -1
-	*pq = old[:n-1]
-	return item
+	return max
 }
 
 func AbsInt(x int) int {
