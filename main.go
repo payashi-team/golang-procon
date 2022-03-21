@@ -15,21 +15,26 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
 	H := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &H[i])
 	}
-	ans := Solve(N, H)
+	ans := Solve(N, K, H)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, H []int) int {
-	dp := make([]int, N+1)
-	dp[1] = AbsInt(H[1] - H[0])
-	for i := 0; i < N-2; i++ {
-		dp[i+2] = MinInt(dp[i]+AbsInt(H[i+2]-H[i]), dp[i+1]+AbsInt(H[i+2]-H[i+1]))
+func Solve(N, K int, H []int) int {
+	dp := make([]int, N)
+	for i := 0; i < N; i++ {
+		dp[i] = INF
+	}
+	dp[0] = 0
+	for i := 0; i < N; i++ {
+		for j := 1; j <= MinInt(i, K); j++ {
+			dp[i] = MinInt(dp[i], dp[i-j]+AbsInt(H[i]-H[i-j]))
+		}
 	}
 	return dp[N-1]
 }
