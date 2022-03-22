@@ -13,31 +13,38 @@ const (
 	// MOD = 998244353
 )
 
+type Item struct {
+	v, w int
+}
+
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	H := make([][3]int, N)
+	var N, W int
+	fmt.Fscan(_r, &N, &W)
+	items := make([]Item, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &H[i][0], &H[i][1], &H[i][2])
+		fmt.Fscan(_r, &items[i].w, &items[i].v)
 	}
-	ans := Solve(N, H)
+	ans := Solve(N, W, items)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, H [][3]int) int {
-	dp := make([][3]int, N+1)
+func Solve(N, W int, items []Item) int {
+	dp := make([][]int, N+1)
+	for i := 0; i <= N; i++ {
+		dp[i] = make([]int, W+1)
+	}
 	for i := 0; i < N; i++ {
-		for j := 0; j < 3; j++ {
-			for k := 0; k < 3; k++ {
-				if j == k {
-					continue
-				}
-				dp[i+1][j] = MaxInt(dp[i+1][j], dp[i][k]+H[i][j])
+		item := items[i]
+		for j := 0; j <= W; j++ {
+			if j-item.w >= 0 {
+				dp[i+1][j] = MaxInt(dp[i][j], dp[i][j-item.w]+item.v)
+			} else {
+				dp[i+1][j] = dp[i][j]
 			}
 		}
 	}
-	return MaxInt(dp[N][0], dp[N][1], dp[N][2])
+	return dp[N][W]
 }
 
 func AbsInt(x int) int {
