@@ -30,21 +30,36 @@ func main() {
 }
 
 func Solve(N, W int, items []Item) int {
-	dp := make([][]int, N+1)
+	dp := make([]map[int]int, N+1) // key: v, value: w
 	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, W+1)
+		dp[i] = make(map[int]int)
 	}
+	dp[0][0] = 0
 	for i := 0; i < N; i++ {
 		item := items[i]
-		for j := 0; j <= W; j++ {
-			if j-item.w >= 0 {
-				dp[i+1][j] = MaxInt(dp[i][j], dp[i][j-item.w]+item.v)
+		for j := 0; j <= N*int(1e3); j++ {
+			w1, ok1 := dp[i][j]
+			if !ok1 {
+				w1 = INF
+			}
+			w2, ok2 := dp[i][j-item.v]
+			if !ok2 {
+				w2 = INF
 			} else {
-				dp[i+1][j] = dp[i][j]
+				w2 += item.w
+			}
+			if w := MinInt(w1, w2); w != INF {
+				dp[i+1][j] = w
 			}
 		}
 	}
-	return dp[N][W]
+	ret := 0
+	for v, w := range dp[N] {
+		if w <= W {
+			ret = MaxInt(ret, v)
+		}
+	}
+	return ret
 }
 
 func AbsInt(x int) int {
