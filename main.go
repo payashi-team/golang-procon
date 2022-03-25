@@ -13,53 +13,45 @@ const (
 	// MOD = 998244353
 )
 
-type Item struct {
-	v, w int
-}
-
 func main() {
 	defer _w.Flush()
-	var N, W int
-	fmt.Fscan(_r, &N, &W)
-	items := make([]Item, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &items[i].w, &items[i].v)
-	}
-	ans := Solve(N, W, items)
-	fmt.Fprintf(_w, "%d\n", ans)
+	var S, T string
+	fmt.Fscan(_r, &S, &T)
+	ans := Solve(S, T)
+	fmt.Fprintf(_w, "%s\n", ans)
 }
 
-func Solve(N, W int, items []Item) int {
-	dp := make([]map[int]int, N+1) // key: v, value: w
-	for i := 0; i <= N; i++ {
-		dp[i] = make(map[int]int)
+func Solve(S, T string) string {
+	ls := len(S)
+	lt := len(T)
+	dp := make([][]int, ls+1)
+	for i := 0; i <= ls; i++ {
+		dp[i] = make([]int, lt+1)
 	}
-	dp[0][0] = 0
-	for i := 0; i < N; i++ {
-		item := items[i]
-		for j := 0; j <= N*int(1e3); j++ {
-			w1, ok1 := dp[i][j]
-			if !ok1 {
-				w1 = INF
-			}
-			w2, ok2 := dp[i][j-item.v]
-			if !ok2 {
-				w2 = INF
+	for i := 0; i < ls; i++ {
+		for j := 0; j < lt; j++ {
+			if S[i] == T[j] {
+				dp[i+1][j+1] = dp[i][j] + 1
 			} else {
-				w2 += item.w
-			}
-			if w := MinInt(w1, w2); w != INF {
-				dp[i+1][j] = w
+				s1 := dp[i][j+1]
+				s2 := dp[i+1][j]
+				dp[i+1][j+1] = MaxInt(s1, s2)
 			}
 		}
 	}
-	ret := 0
-	for v, w := range dp[N] {
-		if w <= W {
-			ret = MaxInt(ret, v)
+	ret := make([]byte, dp[ls][lt])
+	for i, j := ls, lt; dp[i][j] > 0; {
+		if S[i-1] == T[j-1] {
+			ret[dp[i][j]-1] = S[i-1]
+			i--
+			j--
+		} else if dp[i][j] == dp[i-1][j] {
+			i--
+		} else {
+			j--
 		}
 	}
-	return ret
+	return string(ret)
 }
 
 func AbsInt(x int) int {
