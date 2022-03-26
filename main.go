@@ -15,43 +15,62 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var S, T string
-	fmt.Fscan(_r, &S, &T)
-	ans := Solve(S, T)
-	fmt.Fprintf(_w, "%s\n", ans)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	edges := make([][]int, N)
+	for i := 0; i < M; i++ {
+		var x, y int
+		fmt.Fscan(_r, &x, &y)
+		x--
+		y--
+		edges[x] = append(edges[x], y)
+	}
+	ans := Solve(N, M, edges)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(S, T string) string {
-	ls := len(S)
-	lt := len(T)
-	dp := make([][]int, ls+1)
-	for i := 0; i <= ls; i++ {
-		dp[i] = make([]int, lt+1)
+func Solve(N, M int, edges [][]int) int {
+	que := make([]int, 0)
+	outs := make([]int, N)
+	ins := make([]int, N)
+	for i := 0; i < N; i++ {
+		for _, v := range edges[i] {
+			ins[v]++
+		}
+		outs[i] = len(edges[i])
 	}
-	for i := 0; i < ls; i++ {
-		for j := 0; j < lt; j++ {
-			if S[i] == T[j] {
-				dp[i+1][j+1] = dp[i][j] + 1
-			} else {
-				s1 := dp[i][j+1]
-				s2 := dp[i+1][j]
-				dp[i+1][j+1] = MaxInt(s1, s2)
+	for i := 0; i < N; i++ {
+		if ins[i] == 0 {
+			que = append(que, i)
+		}
+	}
+	type Edge struct {
+		form, to int
+	}
+	topo := make([]int, 0)
+	used := make(map[Edge]bool)
+	for len(que) > 0 {
+		u := que[0]
+		que = que[1:]
+		topo = append(topo, u)
+		for _, v := range edges[u] {
+			if used[Edge{u, v}] {
+				continue
+			}
+			used[Edge{u, v}] = true
+			ins[v]--
+			if ins[v] == 0 {
+				que = append(que, v)
 			}
 		}
 	}
-	ret := make([]byte, dp[ls][lt])
-	for i, j := ls, lt; dp[i][j] > 0; {
-		if S[i-1] == T[j-1] {
-			ret[dp[i][j]-1] = S[i-1]
-			i--
-			j--
-		} else if dp[i][j] == dp[i-1][j] {
-			i--
-		} else {
-			j--
+	dp := make([]int, N)
+	for _, u := range topo {
+		for _, v := range edges[u] {
+			dp[v] = MaxInt(dp[v], dp[u]+1)
 		}
 	}
-	return string(ret)
+	return MaxInt(dp...)
 }
 
 func AbsInt(x int) int {
