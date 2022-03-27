@@ -15,44 +15,36 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var H, W int
-	fmt.Fscan(_r, &H, &W)
-	cells := make([][]bool, H)
-	for i := 0; i < H; i++ {
-		cells[i] = make([]bool, W)
-		var tmp string
-		fmt.Fscan(_r, &tmp)
-		for j := 0; j < W; j++ {
-			if tmp[j] == '.' {
-				cells[i][j] = true
-			}
-		}
+	var N int
+	fmt.Fscan(_r, &N)
+	ps := make([]float64, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &ps[i])
 	}
-	ans := Solve(H, W, cells)
-	fmt.Fprintf(_w, "%d\n", ans)
+	ans := Solve(N, ps)
+	fmt.Fprintf(_w, "%.12f\n", ans)
 }
 
-func Solve(H, W int, cells [][]bool) int {
-	dp := make([][]int, H)
-	for i := 0; i < H; i++ {
-		dp[i] = make([]int, W)
+func Solve(N int, ps []float64) float64 {
+	dp := make([][]float64, N+1)
+	for i := 0; i <= N; i++ {
+		dp[i] = make([]float64, N+1)
 	}
-	dp[0][0] = 1
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			if !cells[i][j] {
+	dp[0][0] = 1.0
+	for i := 0; i < N; i++ {
+		for j := 0; j < N; j++ {
+			if dp[i][j] == 0 {
 				continue
 			}
-			if i > 0 {
-				dp[i][j] += dp[i-1][j]
-			}
-			if j > 0 {
-				dp[i][j] += dp[i][j-1]
-			}
-			dp[i][j] %= MOD
+			dp[i+1][j] += dp[i][j] * (1 - ps[i])
+			dp[i+1][j+1] += dp[i][j] * ps[i]
 		}
 	}
-	return dp[H-1][W-1]
+	ans := 0.0
+	for i := N/2 + 1; i <= N; i++ {
+		ans += dp[N][i]
+	}
+	return ans
 }
 
 func AbsInt(x int) int {
