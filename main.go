@@ -15,62 +15,44 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	edges := make([][]int, N)
-	for i := 0; i < M; i++ {
-		var x, y int
-		fmt.Fscan(_r, &x, &y)
-		x--
-		y--
-		edges[x] = append(edges[x], y)
+	var H, W int
+	fmt.Fscan(_r, &H, &W)
+	cells := make([][]bool, H)
+	for i := 0; i < H; i++ {
+		cells[i] = make([]bool, W)
+		var tmp string
+		fmt.Fscan(_r, &tmp)
+		for j := 0; j < W; j++ {
+			if tmp[j] == '.' {
+				cells[i][j] = true
+			}
+		}
 	}
-	ans := Solve(N, M, edges)
+	ans := Solve(H, W, cells)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, edges [][]int) int {
-	que := make([]int, 0)
-	outs := make([]int, N)
-	ins := make([]int, N)
-	for i := 0; i < N; i++ {
-		for _, v := range edges[i] {
-			ins[v]++
-		}
-		outs[i] = len(edges[i])
+func Solve(H, W int, cells [][]bool) int {
+	dp := make([][]int, H)
+	for i := 0; i < H; i++ {
+		dp[i] = make([]int, W)
 	}
-	for i := 0; i < N; i++ {
-		if ins[i] == 0 {
-			que = append(que, i)
-		}
-	}
-	type Edge struct {
-		form, to int
-	}
-	topo := make([]int, 0)
-	used := make(map[Edge]bool)
-	for len(que) > 0 {
-		u := que[0]
-		que = que[1:]
-		topo = append(topo, u)
-		for _, v := range edges[u] {
-			if used[Edge{u, v}] {
+	dp[0][0] = 1
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			if !cells[i][j] {
 				continue
 			}
-			used[Edge{u, v}] = true
-			ins[v]--
-			if ins[v] == 0 {
-				que = append(que, v)
+			if i > 0 {
+				dp[i][j] += dp[i-1][j]
 			}
+			if j > 0 {
+				dp[i][j] += dp[i][j-1]
+			}
+			dp[i][j] %= MOD
 		}
 	}
-	dp := make([]int, N)
-	for _, u := range topo {
-		for _, v := range edges[u] {
-			dp[v] = MaxInt(dp[v], dp[u]+1)
-		}
-	}
-	return MaxInt(dp...)
+	return dp[H-1][W-1]
 }
 
 func AbsInt(x int) int {
