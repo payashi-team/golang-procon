@@ -15,54 +15,36 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%.12f\n", ans)
+	ans := Solve(N, K, A)
+	if ans {
+		fmt.Fprintf(_w, "First\n")
+	} else {
+		fmt.Fprintf(_w, "Second\n")
+	}
 }
 
-func Solve(N int, A []int) float64 {
-	type State struct {
-		a, b, c int
-	}
-	var init State
-	for _, v := range A {
-		if v == 1 {
-			init.a++
-		} else if v == 2 {
-			init.b++
-		} else if v == 3 {
-			init.c++
-		}
-	}
-	n := float64(N)
-	var dp [301][301][301]float64
-	for c := 0; c <= N; c++ {
-		for b := 0; b <= N; b++ {
-			for a := 0; a <= N; a++ {
-				if a+b+c == 0 {
-					continue
-				}
-				val := 1.0
-				if a > 0 {
-					val += dp[a-1][b][c] * float64(a) / n
-				}
-				if b > 0 {
-					val += dp[a+1][b-1][c] * float64(b) / n
-				}
-				if c > 0 {
-					val += dp[a][b+1][c-1] * float64(c) / n
-				}
-				val *= n / float64(a+b+c)
-				dp[a][b][c] = val
+func Solve(N, K int, A []int) bool {
+	dp := make([]bool, K+1) // true: First, false: Second
+	for i := 0; i <= K; i++ {
+		sum := false
+		for _, v := range A {
+			if i-v < 0 {
+				continue
+			}
+			if !dp[i-v] {
+				sum = true
+				break
 			}
 		}
+		dp[i] = sum
 	}
-	return dp[init.a][init.b][init.c]
+	return dp[K]
 }
 
 func AbsInt(x int) int {
