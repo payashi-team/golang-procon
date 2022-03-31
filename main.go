@@ -15,36 +15,37 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
+	var N int
+	fmt.Fscan(_r, &N)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, K, A)
-	if ans {
-		fmt.Fprintf(_w, "First\n")
-	} else {
-		fmt.Fprintf(_w, "Second\n")
-	}
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, A []int) bool {
-	dp := make([]bool, K+1) // true: First, false: Second
-	for i := 0; i <= K; i++ {
-		sum := false
-		for _, v := range A {
-			if i-v < 0 {
-				continue
-			}
-			if !dp[i-v] {
-				sum = true
-				break
-			}
+func Solve(N int, A []int) int {
+	var dfs func(int, int) int // dfs(l, r):=[l, r)
+	dp := make([][]int, N+1)
+	for i := 0; i <= N; i++ {
+		dp[i] = make([]int, N+1)
+		for j := 0; j <= N; j++ {
+			dp[i][j] = -INF
 		}
-		dp[i] = sum
+		dp[i][i] = 0
 	}
-	return dp[K]
+	dfs = func(l, r int) int {
+		if dp[l][r] != -INF {
+			return dp[l][r]
+		}
+		vl := A[l] - dfs(l+1, r)
+		vr := A[r-1] - dfs(l, r-1)
+		ret := MaxInt(vl, vr)
+		dp[l][r] = ret
+		return ret
+	}
+	return dfs(0, N)
 }
 
 func AbsInt(x int) int {
@@ -56,7 +57,7 @@ func AbsInt(x int) int {
 }
 
 func MaxInt(nums ...int) int {
-	ret := -1
+	ret := -INF
 	for _, v := range nums {
 		if ret < v {
 			ret = v
