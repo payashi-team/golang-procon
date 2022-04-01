@@ -15,37 +15,30 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, A)
+	ans := Solve(N, K, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A []int) int {
-	var dfs func(int, int) int // dfs(l, r):=[l, r)
-	dp := make([][]int, N+1)
-	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, N+1)
-		for j := 0; j <= N; j++ {
-			dp[i][j] = -INF
+func Solve(N, K int, A []int) int {
+	dp := make([]int, K+1) // dp[i][j] := children xi, candies xj
+	dp[0] = 1
+	for i := 0; i < N; i++ {
+		cum := make([]int, K+2) // cum[j+1] := dp[i][0]+...+dp[i][j]
+		for j := 0; j < K+1; j++ {
+			cum[j+1] = cum[j] + dp[j]
 		}
-		dp[i][i] = 0
-	}
-	dfs = func(l, r int) int {
-		if dp[l][r] != -INF {
-			return dp[l][r]
+		for j := 0; j <= K; j++ {
+			dp[j] = cum[j+1] - cum[MaxInt(0, j-A[i])] + MOD
+			dp[j] %= MOD
 		}
-		vl := A[l] - dfs(l+1, r)
-		vr := A[r-1] - dfs(l, r-1)
-		ret := MaxInt(vl, vr)
-		dp[l][r] = ret
-		return ret
 	}
-	return dfs(0, N)
+	return dp[K]
 }
 
 func AbsInt(x int) int {
