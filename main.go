@@ -15,30 +15,44 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
+	var N int
+	fmt.Fscan(_r, &N)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, K, A)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, A []int) int {
-	dp := make([]int, K+1) // dp[i][j] := children xi, candies xj
-	dp[0] = 1
-	for i := 0; i < N; i++ {
-		cum := make([]int, K+2) // cum[j+1] := dp[i][0]+...+dp[i][j]
-		for j := 0; j < K+1; j++ {
-			cum[j+1] = cum[j] + dp[j]
-		}
-		for j := 0; j <= K; j++ {
-			dp[j] = cum[j+1] - cum[MaxInt(0, j-A[i])] + MOD
-			dp[j] %= MOD
+func Solve(N int, A []int) int {
+	dp := make([][]int, N+1) // dp(i, j):=[i, j) mincost
+	for i := 0; i <= N; i++ {
+		dp[i] = make([]int, N+1)
+		if i == N {
+			continue
 		}
 	}
-	return dp[K]
+	S := make([]int, N+1) // S[i+1] = A[0]+A[1]+...+A[i]
+	for i := 0; i < N; i++ {
+		S[i+1] = S[i] + A[i]
+	}
+	var rec func(int, int) int
+	rec = func(l, r int) int {
+		if l+1 == r {
+			return 0
+		}
+		if dp[l][r] > 0 {
+			return dp[l][r]
+		}
+		ret := INF
+		for m := l + 1; m < r; m++ {
+			ret = MinInt(ret, rec(l, m)+rec(m, r)+(S[r]-S[l]))
+		}
+		dp[l][r] = ret
+		return ret
+	}
+	return rec(0, N)
 }
 
 func AbsInt(x int) int {
