@@ -17,42 +17,41 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	A := make([]int, N)
+	A := make([][]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+		A[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			fmt.Fscan(_r, &A[i][j])
+		}
 	}
 	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A []int) int {
-	dp := make([][]int, N+1) // dp(i, j):=[i, j) mincost
+func Solve(N int, A [][]int) int {
+	dp := make([][]int, N+1) // dp[i+1][j] := (1<<i)&~(1<<j)
 	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, N+1)
-		if i == N {
-			continue
-		}
+		dp[i] = make([]int, 1<<N)
 	}
-	S := make([]int, N+1) // S[i+1] = A[0]+A[1]+...+A[i]
+	dp[0][0] = 1
 	for i := 0; i < N; i++ {
-		S[i+1] = S[i] + A[i]
+		for bit := 1<<(i+1) - 1; bit < 1<<N; {
+			for j := 0; j < N; j++ {
+				if A[i][j] == 1 && (bit>>j)&1 == 1 {
+					dp[i+1][bit] += dp[i][bit&^(1<<j)]
+					dp[i+1][bit] %= MOD
+				}
+			}
+			x := bit & -bit
+			y := bit + x
+			bit = (((bit & ^y) / x) >> 1) | y
+		}
 	}
-	var rec func(int, int) int
-	rec = func(l, r int) int {
-		if l+1 == r {
-			return 0
-		}
-		if dp[l][r] > 0 {
-			return dp[l][r]
-		}
-		ret := INF
-		for m := l + 1; m < r; m++ {
-			ret = MinInt(ret, rec(l, m)+rec(m, r)+(S[r]-S[l]))
-		}
-		dp[l][r] = ret
-		return ret
+	ret := 0
+	for i := 0; i < N; i++ {
+		ret += dp[N][(1<<N-1)&^(1<<i)]
 	}
-	return rec(0, N)
+	return dp[N][(1<<N)-1]
 }
 
 func AbsInt(x int) int {
