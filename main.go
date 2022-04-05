@@ -13,45 +13,57 @@ const (
 	// MOD = 998244353
 )
 
+type Edge struct {
+	x, y int
+}
+
 func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	A := make([][]int, N)
-	for i := 0; i < N; i++ {
-		A[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			fmt.Fscan(_r, &A[i][j])
-		}
+	E := make([][]int, N)
+	for i := 0; i < N-1; i++ {
+		var x, y int
+		fmt.Fscan(_r, &x, &y)
+		x--
+		y--
+		E[x] = append(E[x], y)
+		E[y] = append(E[y], x)
 	}
-	ans := Solve(N, A)
+	ans := Solve(N, E)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A [][]int) int {
-	dp := make([][]int, N+1) // dp[i+1][j] := (1<<i)&~(1<<j)
-	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, 1<<N)
-	}
-	dp[0][0] = 1
-	for i := 0; i < N; i++ {
-		for bit := 1<<(i+1) - 1; bit < 1<<N; {
-			for j := 0; j < N; j++ {
-				if A[i][j] == 1 && (bit>>j)&1 == 1 {
-					dp[i+1][bit] += dp[i][bit&^(1<<j)]
-					dp[i+1][bit] %= MOD
-				}
-			}
-			x := bit & -bit
-			y := bit + x
-			bit = (((bit & ^y) / x) >> 1) | y
+func Solve(N int, E [][]int) int {
+	used := make([]bool, N)
+	memo := make(map[[2]int]int)
+	var dfs func(int, int) int // c: 0=white, 1=black
+	dfs = func(v, c int) int {
+		if memo[[2]int{v, c}] > 0 {
+			return memo[[2]int{v, c}]
 		}
+		// なんでおなじ引数で複数回よばれてる？？木構造なのに
+		// 色のバリエーションがあるからや！せやメモ化しよ
+		// paint in color c
+		ret := 1
+		for _, u := range E[v] {
+			if used[u] {
+				continue
+			}
+			used[u] = true
+			if c == 0 {
+				ret *= dfs(u, 0) + dfs(u, 1)
+			} else {
+				ret *= dfs(u, 0)
+			}
+			ret %= MOD
+			used[u] = false
+		}
+		memo[[2]int{v, c}] = ret
+		return ret
 	}
-	ret := 0
-	for i := 0; i < N; i++ {
-		ret += dp[N][(1<<N-1)&^(1<<i)]
-	}
-	return dp[N][(1<<N)-1]
+	used[0] = true
+	return (dfs(0, 0) + dfs(0, 1)) % MOD
 }
 
 func AbsInt(x int) int {
