@@ -15,15 +15,59 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var a, b float64
-	fmt.Fscan(_r, &a, &b)
-	ans := Solve(a, b)
-	fmt.Fprintf(_w, "%.10f %.10f\n", ans[0], ans[1])
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
+	A := make([][]int, N)
+	for i := 0; i < N; i++ {
+		A[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			fmt.Fscan(_r, &A[i][j])
+		}
+	}
+	ans := Solve(N, K, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(a, b float64) [2]float64 {
-	L := math.Sqrt(a*a + b*b)
-	return [2]float64{a / L, b / L}
+func Solve(N, K int, A [][]int) int {
+	Multiple := func(X, Y [][]int) [][]int {
+		Z := make([][]int, N)
+		for i := 0; i < N; i++ {
+			Z[i] = make([]int, N)
+		}
+		for i := 0; i < N; i++ {
+			for j := 0; j < N; j++ {
+				for k := 0; k < N; k++ {
+					Z[i][j] += X[i][k] * Y[k][j]
+					Z[i][j] %= MOD
+				}
+			}
+		}
+		return Z
+	}
+	Pow := func(X [][]int, p int) [][]int {
+		ret := make([][]int, N)
+		for i := 0; i < N; i++ {
+			ret[i] = make([]int, N)
+			ret[i][i] = 1
+		}
+		for p > 0 {
+			if p&1 == 1 {
+				ret = Multiple(ret, X)
+			}
+			p >>= 1
+			X = Multiple(X, X)
+		}
+		return ret
+	}
+	B := Pow(A, K)
+	ret := 0
+	for i := 0; i < N; i++ {
+		for j := 0; j < N; j++ {
+			ret += B[i][j]
+			ret %= MOD
+		}
+	}
+	return ret
 }
 
 func AbsInt(x int) int {
