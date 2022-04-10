@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -13,39 +14,67 @@ const (
 	// MOD = 998244353
 )
 
-func main() {
-	defer _w.Flush()
-	var N int
-	var S string
-	fmt.Fscan(_r, &N, &S)
-	ans := Solve(N, S)
-	fmt.Fprintf(_w, "%d\n", ans)
+type Query struct {
+	mode, x, c int
 }
 
-func Solve(N int, S string) int {
-	dp := make([][]int, N+1) // dp(i, j) := decide i, #greater than last = j
-	for i := 0; i <= N; i++ {
-		dp[i] = make([]int, N+1)
-	}
-	for j := 0; j <= N-1; j++ {
-		dp[1][j] = 1
-	}
-	for i := 1; i < N; i++ {
-		sum := make([]int, N+2) // sum[j+1] := dp[i][0]+...+dp[i][j]
-		for j := 1; j <= N+1; j++ {
-			sum[j] = sum[j-1] + dp[i][j-1]
+func main() {
+	defer _w.Flush()
+	var Q int
+	fmt.Fscan(_r, &Q)
+	Qs := make([]Query, Q)
+	for i := 0; i < Q; i++ {
+		var mode, x, c int
+		fmt.Fscan(_r, &mode)
+		if mode == 1 {
+			fmt.Fscan(_r, &x, &c)
+			Qs[i] = Query{mode, x, c}
+		} else {
+			fmt.Fscan(_r, &c)
+			Qs[i] = Query{mode, x, c}
 		}
-		for j := 0; j <= N; j++ {
-			if S[i-1] == '<' {
-				dp[i+1][j] += sum[N-i+1] - sum[j+1]
-				dp[i+1][j] %= MOD
+	}
+	Solve(Q, Qs)
+}
+
+type Item struct {
+	x, l, r int
+}
+
+type Flag struct {
+	block, num int
+}
+
+func Solve(Q int, Qs []Query) {
+	sum := 0
+	outsum := 0
+	lb := Flag{0, 0}
+	que := make([]Item, 0)
+	for _, q := range Qs {
+		// fmt.Printf("%v\n", que)
+		if q.mode == 1 {
+			que = append(que, Item{q.x, sum, sum + q.c})
+			sum += q.c
+		} else {
+			outsum += q.c
+			idx := sort.Search(len(que), func(i int) bool { return que[i].r >= outsum })
+			ub := Flag{idx, outsum - que[idx].l}
+			// fmt.Printf("lb: %d block, %d\nub: %d block, %d\n", lb.block, lb.num, ub.block, ub.num)
+			// fmt.Printf("outsum: %d\n", outsum)
+			ret := 0
+			if lb.block == ub.block {
+				ret += que[idx].x * (ub.num - lb.num)
 			} else {
-				dp[i+1][j] += sum[j+1]
-				dp[i+1][j] %= MOD
+				ret += que[lb.block].x * (que[lb.block].r - que[lb.block].l - lb.num)
+				ret += que[ub.block].x * ub.num
+				for i := lb.block + 1; i < ub.block; i++ {
+					ret += que[i].x * (que[i].r - que[i].l)
+				}
 			}
+			lb = ub
+			fmt.Printf("%d\n", ret)
 		}
 	}
-	return dp[N][0]
 }
 
 func AbsInt(x int) int {
