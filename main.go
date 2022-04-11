@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -14,66 +13,34 @@ const (
 	// MOD = 998244353
 )
 
-type Query struct {
-	mode, x, c int
-}
-
 func main() {
 	defer _w.Flush()
-	var Q int
-	fmt.Fscan(_r, &Q)
-	Qs := make([]Query, Q)
-	for i := 0; i < Q; i++ {
-		var mode, x, c int
-		fmt.Fscan(_r, &mode)
-		if mode == 1 {
-			fmt.Fscan(_r, &x, &c)
-			Qs[i] = Query{mode, x, c}
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	Solve(N, M)
+}
+
+func Solve(N, M int) {
+	if N == 1 {
+		if M != 0 {
+			fmt.Fprintf(_w, "-1\n")
+			return
 		} else {
-			fmt.Fscan(_r, &c)
-			Qs[i] = Query{mode, x, c}
+			fmt.Fprintf(_w, "1 2\n")
+			return
 		}
 	}
-	Solve(Q, Qs)
-}
-
-type Item struct {
-	x, l, r int
-}
-
-type Flag struct {
-	block, num int
-}
-
-func Solve(Q int, Qs []Query) {
-	sum := 0
-	outsum := 0
-	lb := Flag{0, 0}
-	que := make([]Item, 0)
-	for _, q := range Qs {
-		// fmt.Printf("%v\n", que)
-		if q.mode == 1 {
-			que = append(que, Item{q.x, sum, sum + q.c})
-			sum += q.c
-		} else {
-			outsum += q.c
-			idx := sort.Search(len(que), func(i int) bool { return que[i].r >= outsum })
-			ub := Flag{idx, outsum - que[idx].l}
-			// fmt.Printf("lb: %d block, %d\nub: %d block, %d\n", lb.block, lb.num, ub.block, ub.num)
-			// fmt.Printf("outsum: %d\n", outsum)
-			ret := 0
-			if lb.block == ub.block {
-				ret += que[idx].x * (ub.num - lb.num)
-			} else {
-				ret += que[lb.block].x * (que[lb.block].r - que[lb.block].l - lb.num)
-				ret += que[ub.block].x * ub.num
-				for i := lb.block + 1; i < ub.block; i++ {
-					ret += que[i].x * (que[i].r - que[i].l)
-				}
-			}
-			lb = ub
-			fmt.Printf("%d\n", ret)
-		}
+	if M > N-2 || M < 0 {
+		fmt.Fprintf(_w, "-1\n")
+		return
+	}
+	k := M + 1
+	fmt.Printf("1 %d\n", 4*M+4)
+	for i := 0; i <= M; i++ {
+		fmt.Printf("%d %d\n", 4*i+2, 4*i+3)
+	}
+	for j := 0; j < N-(k+1); j++ {
+		fmt.Printf("%d %d\n", 4*j+2+4*M+8, 4*j+3+4*M+8)
 	}
 }
 
