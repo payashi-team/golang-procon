@@ -15,33 +15,88 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	Solve(N, M)
+	S := make([]string, 3)
+	for i := 0; i < 3; i++ {
+		fmt.Fscan(_r, &S[i])
+	}
+	Solve(S)
 }
 
-func Solve(N, M int) {
-	if N == 1 {
-		if M != 0 {
-			fmt.Fprintf(_w, "-1\n")
-			return
-		} else {
-			fmt.Fprintf(_w, "1 2\n")
-			return
+func Solve(S []string) {
+	set := make(map[rune]struct{})
+	for i := 0; i < 3; i++ {
+		for _, c := range S[i] {
+			set[c] = struct{}{}
 		}
 	}
-	if M > N-2 || M < 0 {
-		fmt.Fprintf(_w, "-1\n")
+	if len(set) > 10 {
+		fmt.Fprintln(_w, "UNSOLVABLE")
 		return
 	}
-	k := M + 1
-	fmt.Printf("1 %d\n", 4*M+4)
-	for i := 0; i <= M; i++ {
-		fmt.Printf("%d %d\n", 4*i+2, 4*i+3)
+	arr := make([]rune, 0)
+	for k, _ := range set {
+		arr = append(arr, k)
 	}
-	for j := 0; j < N-(k+1); j++ {
-		fmt.Printf("%d %d\n", 4*j+2+4*M+8, 4*j+3+4*M+8)
+	mp := make(map[rune]int)
+	used := make(map[int]bool)
+	for _, c := range arr {
+		mp[c] = -1
 	}
+	convert := func(T string) int {
+		ret := 0
+		for i := 0; i < len(T); i++ {
+			ret *= 10
+			ret += mp[rune(T[i])]
+		}
+		return ret
+	}
+	check := func() bool {
+		for i := 0; i < 3; i++ {
+			if mp[rune(S[i][0])] == 0 {
+				return false
+			}
+		}
+		return convert(S[0])+convert(S[1]) == convert(S[2])
+	}
+	var dfs func(int) bool
+	dfs = func(num int) bool {
+		if num == len(arr) {
+			if check() {
+				for i := 0; i < 3; i++ {
+					fmt.Printf("%d\n", convert(S[i]))
+				}
+				return true
+			} else {
+				return false
+			}
+		}
+		c := arr[num]
+		for i := 0; i < 10; i++ {
+			if used[i] {
+				continue
+			}
+			mp[c] = i
+			used[i] = true
+			if dfs(num + 1) {
+				return true
+			}
+			mp[c] = -1
+			used[i] = false
+		}
+		return false
+	}
+	if !dfs(0) {
+		fmt.Fprintln(_w, "UNSOLVABLE")
+	}
+}
+
+func Contains(x int, nums ...int) bool {
+	for _, v := range nums {
+		if v == x {
+			return true
+		}
+	}
+	return false
 }
 
 func AbsInt(x int) int {
