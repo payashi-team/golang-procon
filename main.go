@@ -9,85 +9,124 @@ import (
 
 const (
 	INF = int(1 << 61)
-	MOD = int(1e9 + 7)
-	// MOD = 998244353
+	// MOD = int(1e9 + 7)
+	MOD = 998244353
 )
 
 func main() {
 	defer _w.Flush()
-	S := make([]string, 3)
-	for i := 0; i < 3; i++ {
-		fmt.Fscan(_r, &S[i])
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
+	A := make([][]int, N)
+	for i := 0; i < N; i++ {
+		A[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			fmt.Fscan(_r, &A[i][j])
+		}
 	}
-	Solve(S)
+	ans := Solve(N, K, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(S []string) {
-	set := make(map[rune]struct{})
-	for i := 0; i < 3; i++ {
-		for _, c := range S[i] {
-			set[c] = struct{}{}
-		}
+type UnionFind struct {
+	parent []int
+	depth  []int
+	size   []int
+}
+
+func NewUnionFind(N int) *UnionFind {
+	uf := new(UnionFind)
+	uf.parent = make([]int, N)
+	uf.depth = make([]int, N)
+	uf.size = make([]int, N)
+	for i := 0; i < N; i++ {
+		uf.parent[i] = i
+		uf.size[i] = 1
 	}
-	if len(set) > 10 {
-		fmt.Fprintln(_w, "UNSOLVABLE")
+	return uf
+}
+
+func (uf *UnionFind) Root(x int) int {
+	if uf.parent[x] == x {
+		return x
+	}
+	uf.parent[x] = uf.Root(uf.parent[x])
+	return uf.parent[x]
+}
+
+func (uf *UnionFind) Same(x, y int) bool {
+	return uf.Root(x) == uf.Root(y)
+}
+
+func (uf *UnionFind) Unite(x, y int) {
+	if uf.Same(x, y) {
 		return
 	}
-	arr := make([]rune, 0)
-	for k, _ := range set {
-		arr = append(arr, k)
-	}
-	mp := make(map[rune]int)
-	used := make(map[int]bool)
-	for _, c := range arr {
-		mp[c] = -1
-	}
-	convert := func(T string) int {
-		ret := 0
-		for i := 0; i < len(T); i++ {
-			ret *= 10
-			ret += mp[rune(T[i])]
+	x = uf.Root(x)
+	y = uf.Root(y)
+	if uf.depth[x] > uf.depth[y] {
+		uf.parent[y] = x
+		uf.size[x] += uf.size[y]
+	} else {
+		uf.parent[x] = y
+		uf.size[y] += uf.size[x]
+		if uf.depth[x] == uf.depth[y] {
+			uf.depth[y]++
 		}
-		return ret
 	}
-	check := func() bool {
-		for i := 0; i < 3; i++ {
-			if mp[rune(S[i][0])] == 0 {
-				return false
-			}
-		}
-		return convert(S[0])+convert(S[1]) == convert(S[2])
-	}
-	var dfs func(int) bool
-	dfs = func(num int) bool {
-		if num == len(arr) {
-			if check() {
-				for i := 0; i < 3; i++ {
-					fmt.Printf("%d\n", convert(S[i]))
+}
+
+func Solve(N, K int, A [][]int) int {
+	rows := NewUnionFind(N)
+	cols := NewUnionFind(N)
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			ok_rows := true
+			ok_cols := true
+			for k := 0; k < N; k++ {
+				if A[i][k]+A[j][k] > K {
+					ok_rows = false
 				}
-				return true
-			} else {
-				return false
+				if A[k][i]+A[k][j] > K {
+					ok_cols = false
+				}
+			}
+			if ok_rows {
+				rows.Unite(i, j)
+			}
+			if ok_cols {
+				cols.Unite(i, j)
 			}
 		}
-		c := arr[num]
-		for i := 0; i < 10; i++ {
-			if used[i] {
-				continue
-			}
-			mp[c] = i
-			used[i] = true
-			if dfs(num + 1) {
-				return true
-			}
-			mp[c] = -1
-			used[i] = false
+	}
+	fact := make([]int, N+1)
+	fact[0] = 1
+	for i := 0; i < N; i++ {
+		fact[i+1] = fact[i] * (i + 1)
+		fact[i+1] %= MOD
+	}
+	ret := 1
+	used := make([]bool, N)
+	for i := 0; i < N; i++ {
+		r := rows.Root(i)
+		if used[r] {
+			continue
 		}
-		return false
+		used[r] = true
+		ret *= fact[rows.size[r]]
+		ret %= MOD
 	}
-	if !dfs(0) {
-		fmt.Fprintln(_w, "UNSOLVABLE")
+	used = make([]bool, N)
+	for i := 0; i < N; i++ {
+		r := cols.Root(i)
+		if used[r] {
+			continue
+		}
+		used[r] = true
+		ret *= fact[cols.size[r]]
+		ret %= MOD
 	}
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
