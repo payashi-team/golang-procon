@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"math"
 	"os"
@@ -16,105 +15,58 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	H := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &H[i])
-	}
+	var N, M, K, S, T, X int
+	fmt.Fscan(_r, &N, &M, &K, &S, &T, &X)
 	U := make([]int, M)
 	V := make([]int, M)
 	for i := 0; i < M; i++ {
 		fmt.Fscan(_r, &U[i], &V[i])
 	}
-	ans := Solve(N, M, H, U, V)
+	ans := Solve(N, M, K, S, T, X, U, V)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-type Edge struct {
-	to, cost int
-}
-
-func Solve(N, M int, H, U, V []int) int {
-	// tanoshisa + hyoukou
-	cost := make([][]Edge, N)
-
+func Solve(N, M, K, S, T, X int, U, V []int) int {
+	S--
+	T--
+	X--
+	edges := make([][]int, N)
+	for i := 0; i < N; i++ {
+		edges[i] = make([]int, 0)
+	}
 	for i := 0; i < M; i++ {
 		u := U[i] - 1
 		v := V[i] - 1
-		diff := H[u] - H[v]
-		if diff > 0 {
-			cost[u] = append(cost[u], Edge{v, 0})
-			cost[v] = append(cost[v], Edge{u, diff})
-		} else {
-			cost[u] = append(cost[u], Edge{v, -diff})
-			cost[v] = append(cost[v], Edge{u, 0})
+		edges[u] = append(edges[u], v)
+		edges[v] = append(edges[v], u)
+	}
+	dp := make([][][]int, K+1)
+	for i := 0; i <= K; i++ {
+		dp[i] = make([][]int, N)
+		for j := 0; j < N; j++ {
+			dp[i][j] = make([]int, 2)
 		}
 	}
-
-	dist := make([]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = INF
-	}
-	dist[0] = 0
-	pq := make(PQueue, 0)
-	heap.Init(&pq)
-	heap.Push(&pq, &Item{0, 0, -1})
-	for pq.Len() > 0 {
-		item := heap.Pop(&pq).(*Item)
-		u := item.value
-		if dist[u] < -item.priority {
-			continue
-		}
-		for _, e := range cost[u] {
-			if dist[e.to] > dist[u]+e.cost {
-				dist[e.to] = dist[u] + e.cost
-				heap.Push(&pq, &Item{e.to, -dist[e.to], -1})
+	// dp(i, j, b) := S -> j (#path = i),
+	// b = 0 (when passing through X even times), 1 (otherwise)
+	dp[0][S][0] = 1
+	for i := 0; i < K; i++ {
+		for j := 0; j < N; j++ {
+			for b := 0; b <= 1; b++ {
+				for _, k := range edges[j] {
+					// S -> j -> k
+					if k == X {
+						dp[i+1][k][(b+1)%2] += dp[i][j][b]
+						dp[i+1][k][(b+1)%2] %= MOD
+					} else {
+						dp[i+1][k][b] += dp[i][j][b]
+						dp[i+1][k][b] %= MOD
+					}
+				}
 			}
 		}
 	}
-	ans := 0
-	for i := 0; i < N; i++ {
-		ans = MaxInt(ans, H[0]-H[i]-dist[i])
-	}
-	return ans
-}
-
-type Item struct {
-	value, priority, index int
-}
-
-type PQueue []*Item
-
-func (pq PQueue) Len() int {
-	return len(pq)
-}
-
-func (pq PQueue) Less(i, j int) bool {
-	return pq[i].priority > pq[j].priority
-}
-
-func (pq PQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].index = i
-	pq[j].index = j
-}
-
-func (pq *PQueue) Push(x interface{}) {
-	n := len(*pq)
-	item := x.(*Item)
-	item.index = n
-	*pq = append(*pq, item)
-}
-
-func (pq *PQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := (*pq)[n-1]
-	item.index = -1
-	(*pq)[n-1] = nil
-	*pq = (*pq)[:n-1]
-	return item
+	return dp[K][T][0]
 }
 
 func Contains(x int, nums ...int) bool {
