@@ -15,58 +15,25 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M, K, S, T, X int
-	fmt.Fscan(_r, &N, &M, &K, &S, &T, &X)
-	U := make([]int, M)
-	V := make([]int, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &U[i], &V[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, M, K, S, T, X, U, V)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M, K, S, T, X int, U, V []int) int {
-	S--
-	T--
-	X--
-	edges := make([][]int, N)
-	for i := 0; i < N; i++ {
-		edges[i] = make([]int, 0)
-	}
-	for i := 0; i < M; i++ {
-		u := U[i] - 1
-		v := V[i] - 1
-		edges[u] = append(edges[u], v)
-		edges[v] = append(edges[v], u)
-	}
-	dp := make([][][]int, K+1)
-	for i := 0; i <= K; i++ {
-		dp[i] = make([][]int, N)
-		for j := 0; j < N; j++ {
-			dp[i][j] = make([]int, 2)
+func Solve(N int, A []int) int {
+	set := make(map[int]struct{})
+	for _, v := range A {
+		for v&1 == 0 {
+			v >>= 1
 		}
+		set[v] = struct{}{}
 	}
-	// dp(i, j, b) := S -> j (#path = i),
-	// b = 0 (when passing through X even times), 1 (otherwise)
-	dp[0][S][0] = 1
-	for i := 0; i < K; i++ {
-		for j := 0; j < N; j++ {
-			for b := 0; b <= 1; b++ {
-				for _, k := range edges[j] {
-					// S -> j -> k
-					if k == X {
-						dp[i+1][k][(b+1)%2] += dp[i][j][b]
-						dp[i+1][k][(b+1)%2] %= MOD
-					} else {
-						dp[i+1][k][b] += dp[i][j][b]
-						dp[i+1][k][b] %= MOD
-					}
-				}
-			}
-		}
-	}
-	return dp[K][T][0]
+	return len(set)
 }
 
 func Contains(x int, nums ...int) bool {
