@@ -17,23 +17,27 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+	ans := Solve(N)
+	fmt.Fprintf(_w, "%d\n", len(ans))
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d\n", v)
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A []int) int {
-	set := make(map[int]struct{})
-	for _, v := range A {
-		for v&1 == 0 {
-			v >>= 1
+func Solve(N int) []int {
+	ret := make([]int, 0)
+	for i := MaxInt(N-9*18, 1); i <= N; i++ {
+		dsum := 0
+		num := i
+		for num > 0 {
+			dsum += num % 10
+			num /= 10
 		}
-		set[v] = struct{}{}
+		if dsum+i == N {
+			ret = append(ret, i)
+		}
 	}
-	return len(set)
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
