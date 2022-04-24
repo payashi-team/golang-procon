@@ -14,43 +14,80 @@ const (
 )
 
 func main() {
+	// fmt.Printf("%d\n", Gcd(24, 36))
+	// var p, q int
+	// ExtGcd(1, 1, &p, &q)
+	// fmt.Printf("\n%d*%d+%d*%d=%d\n", 1, p, 1, q, 1)
 	defer _w.Flush()
-	var N, R int
-	var S string
-	fmt.Fscan(_r, &N, &R, &S)
-	ans := Solve(N, R, S)
-	fmt.Fprintf(_w, "%d\n", ans)
+	var T int
+	fmt.Fscan(_r, &T)
+	for i := 0; i < T; i++ {
+		var N, A, B, X, Y, Z int
+		fmt.Fscan(_r, &N, &A, &B, &X, &Y, &Z)
+		ans := Solve(N, A, B, X, Y, Z)
+		fmt.Fprintf(_w, "%d\n", ans)
+	}
 }
 
-func Solve(N, R int, S string) int {
-	M := -1
-	for i := N - 1; i >= 0; i-- {
-		if S[i] == '.' {
-			M = i
-			break
-		}
+func Solve(N, A, B, X, Y, Z int) int {
+	if A > B {
+		A, B = B, A
+		Y, Z = Z, Y
 	}
-	ret := 0
-	if M-R+1 > 0 {
-		ret = M - R + 1
+	usea := true
+	useb := true
+	if A*X <= Y {
+		usea = false
+	}
+	if B*X <= Z {
+		useb = false
+	}
+	mosta := (N/A)*Y + (N%A)*X
+	mostb := (N/B)*Z + (N%B)*X
+	if !usea && !useb {
+		return N * X
+	} else if usea && !useb {
+		return mosta
+	} else if !usea && useb {
+		return mostb
 	} else {
-		if M < 0 {
-			return 0
-		} else {
-			return 1
+		ans := MinInt(mosta, mostb)
+		for i := 0; i < 100000; i++ {
+			numB := N/B - i
+			if numB < 0 {
+				break
+			}
+			numA := (N - numB) % A
+			numOne := N - numA - numB
+			cost := numB*Z + numA*Y + numOne*X
+			fmt.Printf("cost: %d\n", cost)
+			ans = MinInt(ans, cost)
 		}
+		return ans
 	}
-	S = S[:M-R+1]
-	for pos := 0; pos < M-R+1; {
-		if S[pos] == '.' {
-			ret++
-			pos += R
-		} else {
-			pos++
-		}
+}
+
+// a*x+b*y=1
+func ExtGcd(a, b int, x, y *int) int {
+	d := a
+	if b != 0 {
+		d = ExtGcd(b, a%b, y, x)
+		*y -= (a / b) * (*x)
+	} else {
+		*x = 1
+		*y = 0
 	}
-	ret++
-	return ret
+	return d
+}
+
+func Gcd(a, b int) int {
+	if a > b {
+		a, b = b, a
+	}
+	if a == 0 {
+		return b
+	}
+	return Gcd(b%a, a)
 }
 
 func Contains(x int, nums ...int) bool {
