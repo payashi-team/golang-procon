@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -15,41 +17,82 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var T int
-	fmt.Fscan(_r, &T)
-	for i := 0; i < T; i++ {
-		var N, A, B, X, Y, Z int
-		fmt.Fscan(_r, &N, &A, &B, &X, &Y, &Z)
-		ans := Solve(N, A, B, X, Y, Z)
-		fmt.Fprintf(_w, "%d\n", ans)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	A := make([]int, M)
+	B := make([]int, M)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &A[i], &B[i])
+	}
+	ans, ok := Solve(N, M, A, B)
+	if !ok {
+		fmt.Fprintf(_w, "-1\n")
+	} else {
+		for _, v := range ans {
+			fmt.Fprintf(_w, "%d ", v)
+		}
+		fmt.Fprintln(_w)
 	}
 }
 
-func Solve(N, A, B, X, Y, Z int) int {
-	Y = MinInt(Y, X*A)
-	Z = MinInt(Z, X*B)
-	// A no houga cospa ii
-	if A*Z < B*Y {
-		A, B = B, A
-		Y, Z = Z, Y
+func Solve(N, M int, A, B []int) ([]int, bool) {
+	ret := make([]int, 0)
+	pq := make(PQueue, 0)
+	heap.Init(&pq)
+	ins := make([]int, N) // 入次数
+	edges := make([][]int, N)
+	for i := 0; i < M; i++ {
+		a := A[i] - 1
+		b := B[i] - 1
+		ins[b]++
+		edges[a] = append(edges[a], b)
 	}
-	// Aop <= N/A
-	// Bop < A
-	ans := N * X
-	if N/A < A-1 {
-		for i := 0; i*A <= N; i++ {
-			j := (N - i*A) / B
-			k := N - i*A - j*B
-			ans = MinInt(ans, i*Y+j*Z+k*X)
+	for i := 0; i < N; i++ {
+		sort.Ints(edges[i])
+	}
+	for i := 0; i < N; i++ {
+		if ins[i] == 0 {
+			heap.Push(&pq, &Item{i})
 		}
+	}
+	for pq.Len() > 0 {
+		u := heap.Pop(&pq).(*Item).pos
+		ret = append(ret, u+1)
+		for _, v := range edges[u] {
+			ins[v]--
+			if ins[v] == 0 {
+				heap.Push(&pq, &Item{v})
+			}
+		}
+	}
+	// 閉路がある
+	if len(ret) < N {
+		return ret, false
 	} else {
-		for j := 0; j < A && j*B <= N; j++ {
-			i := (N - j*B) / A
-			k := N - i*A - j*B
-			ans = MinInt(ans, i*Y+j*Z+k*X)
-		}
+		return ret, true
 	}
-	return ans
+}
+
+type Item struct {
+	pos int
+}
+
+type PQueue []*Item
+
+func (pq PQueue) Len() int           { return len(pq) }
+func (pq PQueue) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
+func (pq PQueue) Less(i, j int) bool { return pq[i].pos < pq[j].pos }
+
+func (pq *PQueue) Push(x interface{}) {
+	*pq = append(*pq, x.(*Item))
+}
+
+func (pq *PQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[:n-1]
+	return item
 }
 
 func Contains(x int, nums ...int) bool {
