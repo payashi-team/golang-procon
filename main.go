@@ -2,11 +2,9 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -17,60 +15,49 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	A := make([]int, M)
-	B := make([]int, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	edges := make([][]int, N)
+	for i := 0; i < N-1; i++ {
+		var u, v int
+		fmt.Fscan(_r, &u, &v)
+		u--
+		v--
+		edges[u] = append(edges[u], v)
+		edges[v] = append(edges[v], u)
 	}
-	ans, ok := Solve(N, M, A, B)
-	if !ok {
-		fmt.Fprintf(_w, "-1\n")
-	} else {
-		for _, v := range ans {
-			fmt.Fprintf(_w, "%d ", v)
-		}
-		fmt.Fprintln(_w)
+	ans := Solve(N, edges)
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d %d\n", v[0], v[1])
 	}
 }
 
-func Solve(N, M int, A, B []int) ([]int, bool) {
-	ret := make([]int, 0)
-	pq := make(PQueue, 0)
-	heap.Init(&pq)
-	ins := make([]int, N) // 入次数
-	edges := make([][]int, N)
-	for i := 0; i < M; i++ {
-		a := A[i] - 1
-		b := B[i] - 1
-		ins[b]++
-		edges[a] = append(edges[a], b)
-	}
-	for i := 0; i < N; i++ {
-		sort.Ints(edges[i])
-	}
-	for i := 0; i < N; i++ {
-		if ins[i] == 0 {
-			heap.Push(&pq, &Item{i})
-		}
-	}
-	for pq.Len() > 0 {
-		u := heap.Pop(&pq).(*Item).pos
-		ret = append(ret, u+1)
+func Solve(N int, edges [][]int) [][]int {
+	used := make([]bool, N)
+	lr := make([][]int, N)
+	cnt := 1
+	var dfs func(int)
+	dfs = func(u int) {
+		used[u] = true
+		l := N + 1
+		r := -1
 		for _, v := range edges[u] {
-			ins[v]--
-			if ins[v] == 0 {
-				heap.Push(&pq, &Item{v})
+			if used[v] {
+				continue
 			}
+			dfs(v)
+			l = MinInt(l, lr[v][0])
+			r = MaxInt(r, lr[v][1])
 		}
+		if r < 0 {
+			lr[u] = []int{cnt, cnt}
+			cnt++
+			return
+		}
+		lr[u] = []int{l, r}
 	}
-	// 閉路がある
-	if len(ret) < N {
-		return ret, false
-	} else {
-		return ret, true
-	}
+	dfs(0)
+	return lr
 }
 
 type Item struct {
