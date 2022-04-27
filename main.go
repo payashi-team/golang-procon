@@ -17,47 +17,17 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	edges := make([][]int, N)
-	for i := 0; i < N-1; i++ {
-		var u, v int
-		fmt.Fscan(_r, &u, &v)
-		u--
-		v--
-		edges[u] = append(edges[u], v)
-		edges[v] = append(edges[v], u)
-	}
-	ans := Solve(N, edges)
-	for _, v := range ans {
-		fmt.Fprintf(_w, "%d %d\n", v[0], v[1])
-	}
+	ans := Solve(N)
+	fmt.Fprintf(_w, "%.10f\n", ans)
 }
 
-func Solve(N int, edges [][]int) [][]int {
-	used := make([]bool, N)
-	lr := make([][]int, N)
-	cnt := 1
-	var dfs func(int)
-	dfs = func(u int) {
-		used[u] = true
-		l := N + 1
-		r := -1
-		for _, v := range edges[u] {
-			if used[v] {
-				continue
-			}
-			dfs(v)
-			l = MinInt(l, lr[v][0])
-			r = MaxInt(r, lr[v][1])
-		}
-		if r < 0 {
-			lr[u] = []int{cnt, cnt}
-			cnt++
-			return
-		}
-		lr[u] = []int{l, r}
+func Solve(N int) float64 {
+	n := float64(N)
+	var ret float64
+	for i := N - 1; i >= 1; i-- {
+		ret += n / float64(i)
 	}
-	dfs(0)
-	return lr
+	return ret
 }
 
 type Item struct {
