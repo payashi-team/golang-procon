@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -17,17 +18,44 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	ans := Solve(N)
-	fmt.Fprintf(_w, "%.10f\n", ans)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
+	}
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int) float64 {
-	n := float64(N)
-	var ret float64
-	for i := N - 1; i >= 1; i-- {
-		ret += n / float64(i)
+func Solve(N int, A []int) int {
+	// Ai + Aj = j-i (i<j)
+	// Ai+i + Aj-j = 0 (i<j)
+	// Ai-i + Aj+j = 0
+	// Bi = Ai+i
+	// Ci = Ai-i
+	// Bi+Cj=0 (i!=j)
+	// O(NlogN)
+	B := make([]int, N)
+	C := make([]int, N)
+	for i := 0; i < N; i++ {
+		B[i] = A[i] + (i + 1)
+		C[i] = A[i] - (i + 1)
 	}
-	return ret
+	sort.Ints(B)
+	sort.Ints(C)
+	ans := 0
+	for _, b := range B {
+		// cnt := sort.SearchInts(C, -b+1) - sort.SearchInts(C, -b)
+		cnt :=
+			sort.Search(N, func(i int) bool {
+				return C[i] > -b
+			}) -
+				sort.Search(N, func(i int) bool {
+					return C[i] >= -b
+				})
+		// fmt.Printf("%d in C = %d\n", -b, cnt)
+		ans += cnt
+	}
+	return ans
 }
 
 type Item struct {
