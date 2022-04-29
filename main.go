@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -14,70 +13,71 @@ const (
 	MOD = 998244353
 )
 
+type Card struct {
+	mark  rune
+	num   string
+	loyal bool
+}
+
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+	var S string
+	fmt.Fscan(_r, &S)
+	cards := make([]Card, 0)
+	loyals := []string{"A", "10", "J", "Q", "K"}
+	for pos := 0; pos < len(S); pos++ {
+		var c Card
+		c.mark = rune(S[pos])
+		pos++
+		if S[pos] == '1' {
+			c.num = "10"
+			pos++
+		} else {
+			c.num = S[pos : pos+1]
+		}
+		for _, l := range loyals {
+			if c.num == l {
+				c.loyal = true
+			}
+		}
+		cards = append(cards, c)
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
-}
-
-func Solve(N int, A []int) int {
-	// Ai + Aj = j-i (i<j)
-	// Ai+i + Aj-j = 0 (i<j)
-	// Ai-i + Aj+j = 0
-	// Bi = Ai+i
-	// Ci = Ai-i
-	// Bi+Cj=0 (i!=j)
-	// O(NlogN)
-	B := make([]int, N)
-	C := make([]int, N)
-	for i := 0; i < N; i++ {
-		B[i] = A[i] + (i + 1)
-		C[i] = A[i] - (i + 1)
+	ans := Solve(cards)
+	str := ""
+	for _, c := range ans {
+		str += string(c.mark) + c.num
 	}
-	sort.Ints(B)
-	sort.Ints(C)
-	ans := 0
-	for _, b := range B {
-		// cnt := sort.SearchInts(C, -b+1) - sort.SearchInts(C, -b)
-		cnt :=
-			sort.Search(N, func(i int) bool {
-				return C[i] > -b
-			}) -
-				sort.Search(N, func(i int) bool {
-					return C[i] >= -b
-				})
-		// fmt.Printf("%d in C = %d\n", -b, cnt)
-		ans += cnt
+	if str == "" {
+		str = "0"
 	}
-	return ans
+	fmt.Fprintf(_w, "%s\n", str)
 }
 
-type Item struct {
-	pos int
-}
-
-type PQueue []*Item
-
-func (pq PQueue) Len() int           { return len(pq) }
-func (pq PQueue) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
-func (pq PQueue) Less(i, j int) bool { return pq[i].pos < pq[j].pos }
-
-func (pq *PQueue) Push(x interface{}) {
-	*pq = append(*pq, x.(*Item))
-}
-
-func (pq *PQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	*pq = old[:n-1]
-	return item
+func Solve(cards []Card) []Card {
+	// for _, c := range cards {
+	// 	fmt.Printf("%c@%s(%v) ", c.mark, c.num, c.loyal)
+	// }
+	cnt := make(map[rune]int)
+	trash := make([]Card, 0)
+	var mark rune
+	for i, c := range cards {
+		if !c.loyal {
+			continue
+		}
+		cnt[c.mark]++
+		if cnt[c.mark] >= 5 {
+			// fmt.Fprintf(_w, "%c is collected!\n", c.mark)
+			mark = c.mark
+			cards = cards[:i]
+			break
+		}
+	}
+	for _, c := range cards {
+		if !c.loyal || c.mark != mark {
+			trash = append(trash, c)
+		}
+	}
+	return trash
 }
 
 func Contains(x int, nums ...int) bool {
