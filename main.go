@@ -13,71 +13,57 @@ const (
 	MOD = 998244353
 )
 
-type Card struct {
-	mark  rune
-	num   string
-	loyal bool
-}
-
 func main() {
 	defer _w.Flush()
-	var S string
-	fmt.Fscan(_r, &S)
-	cards := make([]Card, 0)
-	loyals := []string{"A", "10", "J", "Q", "K"}
-	for pos := 0; pos < len(S); pos++ {
-		var c Card
-		c.mark = rune(S[pos])
-		pos++
-		if S[pos] == '1' {
-			c.num = "10"
-			pos++
-		} else {
-			c.num = S[pos : pos+1]
-		}
-		for _, l := range loyals {
-			if c.num == l {
-				c.loyal = true
-			}
-		}
-		cards = append(cards, c)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(cards)
-	str := ""
-	for _, c := range ans {
-		str += string(c.mark) + c.num
-	}
-	if str == "" {
-		str = "0"
-	}
-	fmt.Fprintf(_w, "%s\n", str)
+	ans := Solve(N, K, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(cards []Card) []Card {
-	// for _, c := range cards {
-	// 	fmt.Printf("%c@%s(%v) ", c.mark, c.num, c.loyal)
-	// }
-	cnt := make(map[rune]int)
-	trash := make([]Card, 0)
-	var mark rune
-	for i, c := range cards {
-		if !c.loyal {
+func Solve(N, K int, A []int) int {
+	l := 0
+	r := int(2e9) + 1
+	for r-l > 1 {
+		// [l, r)
+		mid := (r + l) / 2
+		cnt := 0
+		for _, v := range A {
+			if v <= mid {
+				continue
+			}
+			cnt += v - mid
+		}
+		if cnt <= K {
+			r = mid
+		} else {
+			l = mid
+		}
+	}
+	ret := 0
+	for _, v := range A {
+		if v <= r {
 			continue
 		}
-		cnt[c.mark]++
-		if cnt[c.mark] >= 5 {
-			// fmt.Fprintf(_w, "%c is collected!\n", c.mark)
-			mark = c.mark
-			cards = cards[:i]
-			break
+		ret += v*(v+1)/2 - r*(r+1)/2
+		K -= v - r
+	}
+	if r > 0 {
+		for _, v := range A {
+			if v >= r {
+				K--
+				if K < 0 {
+					break
+				}
+				ret += r
+			}
 		}
 	}
-	for _, c := range cards {
-		if !c.loyal || c.mark != mark {
-			trash = append(trash, c)
-		}
-	}
-	return trash
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
