@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -15,55 +16,64 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
-	A := make([]int, N)
+	var N, Q int
+	fmt.Fscan(_r, &N, &Q)
+	X := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+		fmt.Fscan(_r, &X[i])
 	}
-	ans := Solve(N, K, A)
-	fmt.Fprintf(_w, "%d\n", ans)
+	A := make([]int, N-1)
+	B := make([]int, N-1)
+	for i := 0; i < N-1; i++ {
+		fmt.Fscan(_r, &A[i], &B[i])
+	}
+	V := make([]int, Q)
+	K := make([]int, Q)
+	for i := 0; i < Q; i++ {
+		fmt.Fscan(_r, &V[i], &K[i])
+	}
+	ans := Solve(N, X, A, B, Q, V, K)
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d\n", v)
+	}
 }
 
-func Solve(N, K int, A []int) int {
-	l := 0
-	r := int(2e9) + 1
-	for r-l > 1 {
-		// [l, r)
-		mid := (r + l) / 2
-		cnt := 0
-		for _, v := range A {
-			if v <= mid {
+func Solve(N int, X, A, B []int, Q int, V, K []int) []int {
+	MAX_K := 20
+	edges := make([][]int, N)
+	for i := 0; i < N-1; i++ {
+		a := A[i] - 1
+		b := B[i] - 1
+		edges[a] = append(edges[a], b)
+		edges[b] = append(edges[b], a)
+	}
+	called := make([]bool, N)
+	biggest := make([][]int, N) // 各頂点について、大きな順に20個いれる
+	var dfs func(int) []int
+	dfs = func(v int) []int {
+		called[v] = true
+		biggest[v] = []int{X[v]}
+		for _, u := range edges[v] {
+			if called[u] {
 				continue
 			}
-			cnt += v - mid
+			biggest[v] = append(biggest[v], dfs(u)...)
 		}
-		if cnt <= K {
-			r = mid
-		} else {
-			l = mid
+		sort.Slice(biggest[v], func(i, j int) bool { return biggest[v][i] > biggest[v][j] })
+		if len(biggest[v]) > MAX_K {
+			biggest[v] = biggest[v][:MAX_K]
 		}
+		return biggest[v]
 	}
-	ret := 0
-	for _, v := range A {
-		if v <= r {
-			continue
-		}
-		ret += v*(v+1)/2 - r*(r+1)/2
-		K -= v - r
+	dfs(0)
+	// fmt.Printf("%v\n", biggest)
+	ans := make([]int, Q)
+	for i := 0; i < Q; i++ {
+		v := V[i] - 1
+		k := K[i] - 1
+		ans[i] = biggest[v][k]
 	}
-	if r > 0 {
-		for _, v := range A {
-			if v >= r {
-				K--
-				if K < 0 {
-					break
-				}
-				ret += r
-			}
-		}
-	}
-	return ret
+	return ans
 }
 
 func Contains(x int, nums ...int) bool {
