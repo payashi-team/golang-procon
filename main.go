@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -16,64 +15,47 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, Q int
-	fmt.Fscan(_r, &N, &Q)
-	X := make([]int, N)
+	var N, X, Y int
+	fmt.Fscan(_r, &N, &X, &Y)
+	A := make([]int, N)
+	B := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &X[i])
-	}
-	A := make([]int, N-1)
-	B := make([]int, N-1)
-	for i := 0; i < N-1; i++ {
 		fmt.Fscan(_r, &A[i], &B[i])
 	}
-	V := make([]int, Q)
-	K := make([]int, Q)
-	for i := 0; i < Q; i++ {
-		fmt.Fscan(_r, &V[i], &K[i])
-	}
-	ans := Solve(N, X, A, B, Q, V, K)
-	for _, v := range ans {
-		fmt.Fprintf(_w, "%d\n", v)
-	}
+	ans := Solve(N, X, Y, A, B)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, X, A, B []int, Q int, V, K []int) []int {
-	MAX_K := 20
-	edges := make([][]int, N)
-	for i := 0; i < N-1; i++ {
-		a := A[i] - 1
-		b := B[i] - 1
-		edges[a] = append(edges[a], b)
-		edges[b] = append(edges[b], a)
-	}
-	called := make([]bool, N)
-	biggest := make([][]int, N) // 各頂点について、大きな順に20個いれる
-	var dfs func(int) []int
-	dfs = func(v int) []int {
-		called[v] = true
-		biggest[v] = []int{X[v]}
-		for _, u := range edges[v] {
-			if called[u] {
-				continue
+func Solve(N, X, Y int, A, B []int) int {
+	dp := make([][][]int, N+1)
+	// dp(i, x, y):=sumA=x, sumB=y, min #bento
+	for i := 0; i <= N; i++ {
+		dp[i] = make([][]int, X+1)
+		for j := 0; j <= X; j++ {
+			dp[i][j] = make([]int, Y+1)
+			for k := 0; k <= Y; k++ {
+				dp[i][j][k] = INF
 			}
-			biggest[v] = append(biggest[v], dfs(u)...)
 		}
-		sort.Slice(biggest[v], func(i, j int) bool { return biggest[v][i] > biggest[v][j] })
-		if len(biggest[v]) > MAX_K {
-			biggest[v] = biggest[v][:MAX_K]
+	}
+	dp[0][0][0] = 0
+	// dp(i+1, j, k) = dp(i, j, k)
+	// dp(i+1, j+Ai, k+Bi) = dp(i, j, k)+1
+	for i := 0; i < N; i++ {
+		for j := 0; j <= X; j++ {
+			for k := 0; k <= Y; k++ {
+				dp[i+1][j][k] = MinInt(dp[i+1][j][k], dp[i][j][k])
+				dp[i+1][MinInt(j+A[i], X)][MinInt(k+B[i], Y)] = MinInt(dp[i+1][MinInt(j+A[i], X)][MinInt(k+B[i], Y)], dp[i][j][k]+1)
+			}
 		}
-		return biggest[v]
 	}
-	dfs(0)
-	// fmt.Printf("%v\n", biggest)
-	ans := make([]int, Q)
-	for i := 0; i < Q; i++ {
-		v := V[i] - 1
-		k := K[i] - 1
-		ans[i] = biggest[v][k]
+	ans := dp[N][X][Y]
+	if ans == INF {
+		return -1
+	} else {
+		return ans
 	}
-	return ans
+
 }
 
 func Contains(x int, nums ...int) bool {
