@@ -15,47 +15,37 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, X, Y int
-	fmt.Fscan(_r, &N, &X, &Y)
+	var N, K int
+	fmt.Fscan(_r, &N, &K)
 	A := make([]int, N)
-	B := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i], &B[i])
+		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, X, Y, A, B)
+	ans := Solve(N, K, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, X, Y int, A, B []int) int {
-	dp := make([][][]int, N+1)
-	// dp(i, x, y):=sumA=x, sumB=y, min #bento
-	for i := 0; i <= N; i++ {
-		dp[i] = make([][]int, X+1)
-		for j := 0; j <= X; j++ {
-			dp[i][j] = make([]int, Y+1)
-			for k := 0; k <= Y; k++ {
-				dp[i][j][k] = INF
-			}
+func Solve(N, K int, A []int) int {
+	B := make([]int, N-1)
+	for i := 0; i < N-1; i++ {
+		if A[i+1] > A[i] {
+			B[i] = 1
 		}
 	}
-	dp[0][0][0] = 0
-	// dp(i+1, j, k) = dp(i, j, k)
-	// dp(i+1, j+Ai, k+Bi) = dp(i, j, k)+1
-	for i := 0; i < N; i++ {
-		for j := 0; j <= X; j++ {
-			for k := 0; k <= Y; k++ {
-				dp[i+1][j][k] = MinInt(dp[i+1][j][k], dp[i][j][k])
-				dp[i+1][MinInt(j+A[i], X)][MinInt(k+B[i], Y)] = MinInt(dp[i+1][MinInt(j+A[i], X)][MinInt(k+B[i], Y)], dp[i][j][k]+1)
-			}
+	ret := 0
+	cnt := 0
+	B = append(B, 0)
+	for i := N - 2; i >= 0; i-- {
+		if B[i] == 0 {
+			ret += MaxInt(0, cnt-(K-1)+1)
+			cnt = 0
+		} else {
+			cnt++
+			B[i] = cnt
 		}
 	}
-	ans := dp[N][X][Y]
-	if ans == INF {
-		return -1
-	} else {
-		return ans
-	}
-
+	ret += MaxInt(0, cnt-(K-1)+1)
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
