@@ -15,37 +15,38 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	fmt.Fscan(_r, &N, &K)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		fmt.Fscan(_r, &A[i])
 	}
-	ans := Solve(N, K, A)
+	ans := Solve(N, M, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, A []int) int {
-	B := make([]int, N-1)
-	for i := 0; i < N-1; i++ {
-		if A[i+1] > A[i] {
-			B[i] = 1
+func Solve(N, M int, A []int) int {
+	pos:=make([][]int, int(15e5)+1)
+	for i := 0; i <= int(15e5); i++ {
+		pos[i] = make([]int, 0)
+	}
+	for i, v := range A {
+		pos[v] = append(pos[v], i+1)
+	}
+	for i := 0; i <= int(15e5); i++ {
+		if len(pos[i])==0{
+			return i
+		}
+		pos[i] = append([]int{0}, pos[i]...)
+		pos[i] = append(pos[i], N+1)
+		// fmt.Printf("%d: %v\n", i, pos[i])
+		for j := 0; j < len(pos[i])-1; j++ {
+			if pos[i][j+1]-pos[i][j]>M{
+				return i
+			}
 		}
 	}
-	ret := 0
-	cnt := 0
-	B = append(B, 0)
-	for i := N - 2; i >= 0; i-- {
-		if B[i] == 0 {
-			ret += MaxInt(0, cnt-(K-1)+1)
-			cnt = 0
-		} else {
-			cnt++
-			B[i] = cnt
-		}
-	}
-	ret += MaxInt(0, cnt-(K-1)+1)
-	return ret
+	return int(15e5)+1
 }
 
 func Contains(x int, nums ...int) bool {
