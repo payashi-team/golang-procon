@@ -15,38 +15,45 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	A := make([]int, N)
+	var N int
+	fmt.Fscan(_r, &N)
+	X := make([]int, N)
+	Y := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
+		fmt.Fscan(_r, &X[i], &Y[i])
 	}
-	ans := Solve(N, M, A)
+	ans := Solve(N, X, Y)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, A []int) int {
-	pos:=make([][]int, int(15e5)+1)
-	for i := 0; i <= int(15e5); i++ {
-		pos[i] = make([]int, 0)
+func Solve(N int, X, Y []int) int {
+	ranges := make([][]int, 2)
+	for i := 0; i < 2; i++ {
+		ranges[i] = make([]int, 2)
+		ranges[i][0] = INF
+		ranges[i][1] = -INF
 	}
-	for i, v := range A {
-		pos[v] = append(pos[v], i+1)
-	}
-	for i := 0; i <= int(15e5); i++ {
-		if len(pos[i])==0{
-			return i
-		}
-		pos[i] = append([]int{0}, pos[i]...)
-		pos[i] = append(pos[i], N+1)
-		// fmt.Printf("%d: %v\n", i, pos[i])
-		for j := 0; j < len(pos[i])-1; j++ {
-			if pos[i][j+1]-pos[i][j]>M{
-				return i
+	for i := 0; i < N; i++ {
+		x := X[i]
+		y := Y[i]
+		for j := 0; j < 2; j++ {
+			val := x
+			if j&1 == 0 {
+				val += y
+				// fmt.Printf("%d + %d = %d\n", x, y, val)
+			} else {
+				val -= y
+				// fmt.Printf("%d - %d = %d\n", x, y, val)
 			}
+			ranges[j][0] = MinInt(ranges[j][0], val)
+			ranges[j][1] = MaxInt(ranges[j][1], val)
 		}
 	}
-	return int(15e5)+1
+	ans := -1
+	for i := 0; i < 2; i++ {
+		ans = MaxInt(ans, ranges[i][1]-ranges[i][0])
+	}
+	return ans
 }
 
 func Contains(x int, nums ...int) bool {
