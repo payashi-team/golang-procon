@@ -13,25 +13,89 @@ const (
 	MOD = 998244353
 )
 
+type Point struct {
+	x, y int
+}
+
 func main() {
 	defer _w.Flush()
-	var N, Q int
-	fmt.Fscan(_r, &N, &Q)
-	nums := make([]int, N+1)
-	for i := 0; i < Q; i++ {
-		var L, R int
-		fmt.Fscan(_r, &L, &R)
-		nums[L-1]++
-		nums[R]--
-	}
+
+	var H, W, N, M int
+	fmt.Fscan(_r, &H, &W, &N, &M)
+	lights := make([]Point, N)
+	blocks := make([]Point, M)
 	for i := 0; i < N; i++ {
-		nums[i+1] += nums[i]
+		fmt.Fscan(_r, &lights[i].x, &lights[i].y)
 	}
-	nums = nums[:N]
-	for _, v := range nums {
-		fmt.Printf("%d", v&1)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &blocks[i].x, &blocks[i].y)
 	}
-	fmt.Println()
+	ans := Solve(H, W, N, M, lights, blocks)
+	fmt.Fprintf(_w, "%d\n", ans)
+}
+
+func Solve(H, W, N, M int, lights, blocks []Point) int {
+	// 0: undefined, 1: light, 2: blocks, 3: lit(horizontally), 4: lit(vertically)
+	lit := make([][]byte, H)
+	for i := 0; i < H; i++ {
+		lit[i] = make([]byte, W)
+	}
+	// init lit
+	for i := 0; i < N; i++ {
+		p := &lights[i]
+		p.x--
+		p.y--
+		lit[p.x][p.y] = 1
+	}
+	for i := 0; i < M; i++ {
+		p := &blocks[i]
+		p.x--
+		p.y--
+		lit[p.x][p.y] = 2
+	}
+	// simulate
+	for _, p := range lights {
+		for i := p.x - 1; 0 <= i && i < H; i-- {
+			if lit[i][p.y] == 0 {
+				lit[i][p.y] = 3
+			} else {
+				break
+			}
+		}
+		for i := p.x + 1; 0 <= i && i < H; i++ {
+			if lit[i][p.y] == 0 {
+				lit[i][p.y] = 3
+			} else {
+				break
+			}
+		}
+	}
+	for _, p := range lights {
+		for i := p.y - 1; 0 <= i && i < W; i-- {
+			if lit[p.x][i] == 0 || lit[p.x][i] == 3 {
+				lit[p.x][i] = 4
+			} else {
+				break
+			}
+		}
+		for i := p.y + 1; 0 <= i && i < W; i++ {
+			if lit[p.x][i] == 0 || lit[p.x][i] == 3 {
+				lit[p.x][i] = 4
+			} else {
+				break
+			}
+		}
+	}
+	ret := 0
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			if lit[i][j]&1 == 1 || lit[i][j] == 4 {
+				ret++
+			}
+		}
+	}
+	return ret
+
 }
 
 func Contains(x int, nums ...int) bool {
