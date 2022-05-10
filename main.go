@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -15,42 +16,49 @@ const (
 
 func main() {
 	defer _w.Flush()
-
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	B := make([][]int, N)
+	var N int
+	fmt.Fscan(_r, &N)
+	P := make([]int, N)
 	for i := 0; i < N; i++ {
-		B[i] = make([]int, M)
-		var S string
-		fmt.Fscan(_r, &S)
-		for j := 0; j < M; j++ {
-			B[i][j] = int(S[j] - '0')
-		}
+		fmt.Fscan(_r, &P[i])
+		P[i]--
 	}
-	ans := Solve(N, M, B)
-	for i := 0; i < N; i++ {
-		for j := 0; j < M; j++ {
-			fmt.Fprintf(_w, "%d", ans[i][j])
+	ans, err := Solve(N, P)
+	if err != nil {
+		fmt.Fprintf(_w, "-1\n")
+	} else {
+		for i := 0; i < N-1; i++ {
+			fmt.Fprintf(_w, "%d\n", ans[i])
 		}
-		fmt.Fprintln(_w)
 	}
 }
 
-func Solve(N, M int, B [][]int) [][]int {
-	A := make([][]int, N)
-	for i := 0; i < N; i++ {
-		A[i] = make([]int, M)
+func Solve(N int, P []int) ([]int, error) {
+	Q := make(map[int]int, N)
+	used := make([]bool, N-1)
+	ret := make([]int, 0)
+	for i, v := range P {
+		Q[v] = i
 	}
-	for i := 1; i < N-1; i++ {
-		for j := 1; j < M-1; j++ {
-			if i-2 >= 0 {
-				A[i][j] = B[i-1][j] - A[i-2][j] - A[i-1][j-1] - A[i-1][j+1]
+	for i := 0; i < N; i++ {
+		for Q[i] > i {
+			pos := Q[i]
+			if used[pos-1] {
+				return ret, errors.New("wtf")
 			} else {
-				A[i][j] = B[i-1][j]
+				used[pos-1] = true
+				ret = append(ret, pos)
 			}
+			// swap
+			j := P[pos-1]
+			P[pos], P[pos-1] = P[pos-1], P[pos]
+			Q[i], Q[j] = Q[j], Q[i]
 		}
 	}
-	return A
+	if len(ret) != N-1 {
+		return ret, errors.New("no bueno")
+	}
+	return ret, nil
 }
 
 func Contains(x int, nums ...int) bool {
