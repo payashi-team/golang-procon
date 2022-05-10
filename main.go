@@ -13,89 +13,44 @@ const (
 	MOD = 998244353
 )
 
-type Point struct {
-	x, y int
-}
-
 func main() {
 	defer _w.Flush()
 
-	var H, W, N, M int
-	fmt.Fscan(_r, &H, &W, &N, &M)
-	lights := make([]Point, N)
-	blocks := make([]Point, M)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	B := make([][]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &lights[i].x, &lights[i].y)
+		B[i] = make([]int, M)
+		var S string
+		fmt.Fscan(_r, &S)
+		for j := 0; j < M; j++ {
+			B[i][j] = int(S[j] - '0')
+		}
 	}
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &blocks[i].x, &blocks[i].y)
+	ans := Solve(N, M, B)
+	for i := 0; i < N; i++ {
+		for j := 0; j < M; j++ {
+			fmt.Fprintf(_w, "%d", ans[i][j])
+		}
+		fmt.Fprintln(_w)
 	}
-	ans := Solve(H, W, N, M, lights, blocks)
-	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(H, W, N, M int, lights, blocks []Point) int {
-	// 0: undefined, 1: light, 2: blocks, 3: lit(horizontally), 4: lit(vertically)
-	lit := make([][]byte, H)
-	for i := 0; i < H; i++ {
-		lit[i] = make([]byte, W)
-	}
-	// init lit
+func Solve(N, M int, B [][]int) [][]int {
+	A := make([][]int, N)
 	for i := 0; i < N; i++ {
-		p := &lights[i]
-		p.x--
-		p.y--
-		lit[p.x][p.y] = 1
+		A[i] = make([]int, M)
 	}
-	for i := 0; i < M; i++ {
-		p := &blocks[i]
-		p.x--
-		p.y--
-		lit[p.x][p.y] = 2
-	}
-	// simulate
-	for _, p := range lights {
-		for i := p.x - 1; 0 <= i && i < H; i-- {
-			if lit[i][p.y] == 0 {
-				lit[i][p.y] = 3
+	for i := 1; i < N-1; i++ {
+		for j := 1; j < M-1; j++ {
+			if i-2 >= 0 {
+				A[i][j] = B[i-1][j] - A[i-2][j] - A[i-1][j-1] - A[i-1][j+1]
 			} else {
-				break
-			}
-		}
-		for i := p.x + 1; 0 <= i && i < H; i++ {
-			if lit[i][p.y] == 0 {
-				lit[i][p.y] = 3
-			} else {
-				break
+				A[i][j] = B[i-1][j]
 			}
 		}
 	}
-	for _, p := range lights {
-		for i := p.y - 1; 0 <= i && i < W; i-- {
-			if lit[p.x][i] == 0 || lit[p.x][i] == 3 {
-				lit[p.x][i] = 4
-			} else {
-				break
-			}
-		}
-		for i := p.y + 1; 0 <= i && i < W; i++ {
-			if lit[p.x][i] == 0 || lit[p.x][i] == 3 {
-				lit[p.x][i] = 4
-			} else {
-				break
-			}
-		}
-	}
-	ret := 0
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			if lit[i][j]&1 == 1 || lit[i][j] == 4 {
-				ret++
-			}
-		}
-	}
-	return ret
-
+	return A
 }
 
 func Contains(x int, nums ...int) bool {
