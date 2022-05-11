@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -18,47 +18,28 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscan(_r, &N)
-	P := make([]int, N)
+	W := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &P[i])
-		P[i]--
+		fmt.Fscan(_r, &W[i])
+		W[i]--
 	}
-	ans, err := Solve(N, P)
-	if err != nil {
-		fmt.Fprintf(_w, "-1\n")
-	} else {
-		for i := 0; i < N-1; i++ {
-			fmt.Fprintf(_w, "%d\n", ans[i])
-		}
-	}
+	ans := Solve(N, W)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, P []int) ([]int, error) {
-	Q := make(map[int]int, N)
-	used := make([]bool, N-1)
-	ret := make([]int, 0)
-	for i, v := range P {
-		Q[v] = i
-	}
+func Solve(N int, W []int) int {
+	ends := make([]int, 0) // asc
 	for i := 0; i < N; i++ {
-		for Q[i] > i {
-			pos := Q[i]
-			if used[pos-1] {
-				return ret, errors.New("wtf")
-			} else {
-				used[pos-1] = true
-				ret = append(ret, pos)
-			}
-			// swap
-			j := P[pos-1]
-			P[pos], P[pos-1] = P[pos-1], P[pos]
-			Q[i], Q[j] = Q[j], Q[i]
+		// new end
+		if len(ends) == 0 || ends[len(ends)-1] < W[i] {
+			ends = append(ends, W[i])
+			sort.Ints(ends)
+		} else {
+			idx := sort.Search(len(ends), func(j int) bool { return ends[j] >= W[i] })
+			ends[idx] = W[i]
 		}
 	}
-	if len(ret) != N-1 {
-		return ret, errors.New("no bueno")
-	}
-	return ret, nil
+	return len(ends)
 }
 
 func Contains(x int, nums ...int) bool {
