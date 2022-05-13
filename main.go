@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -16,30 +15,85 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	W := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &W[i])
-		W[i]--
+	var H, W int
+	fmt.Fscan(_r, &H, &W)
+	field := make([][]byte, H)
+	for i := 0; i < H; i++ {
+		fmt.Fscan(_r, &field[i])
 	}
-	ans := Solve(N, W)
-	fmt.Fprintf(_w, "%d\n", ans)
+	Solve(H, W, field)
 }
 
-func Solve(N int, W []int) int {
-	ends := make([]int, 0) // asc
-	for i := 0; i < N; i++ {
-		// new end
-		if len(ends) == 0 || ends[len(ends)-1] < W[i] {
-			ends = append(ends, W[i])
-			sort.Ints(ends)
-		} else {
-			idx := sort.Search(len(ends), func(j int) bool { return ends[j] >= W[i] })
-			ends[idx] = W[i]
+func Solve(H, W int, field [][]byte) {
+	X := make([][]bool, H)
+	Y := make([][]bool, H)
+	for i := 0; i < H; i++ {
+		X[i] = make([]bool, W)
+		Y[i] = make([]bool, W)
+	}
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			black := true
+			for dx := -1; dx <= 1; dx++ {
+				for dy := -1; dy <= 1; dy++ {
+					nx := i + dx
+					ny := j + dy
+					if nx < 0 || H <= nx || ny < 0 || W <= ny {
+						continue
+					}
+					if field[nx][ny] != '#' {
+						black = false
+					}
+				}
+			}
+			if black {
+				X[i][j] = true
+			}
 		}
 	}
-	return len(ends)
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			if !X[i][j] {
+				continue
+			}
+			Y[i][j] = true
+			for dx := -1; dx <= 1; dx++ {
+				for dy := -1; dy <= 1; dy++ {
+					nx := i + dx
+					ny := j + dy
+					if nx < 0 || H <= nx || ny < 0 || W <= ny {
+						continue
+					}
+					Y[nx][ny] = true
+				}
+			}
+		}
+	}
+	ok:=true
+	for i := 0; i < H; i++ {
+		for j := 0; j < W; j++ {
+			if (field[i][j]=='#')!=Y[i][j]{
+				ok = false
+			}
+		}
+	}
+	if !ok{
+		fmt.Fprintf(_w, "impossible\n")
+	}else{
+		fmt.Fprintf(_w, "possible\n")
+		for i := 0; i < H; i++ {
+			for j := 0; j < W; j++ {
+				if X[i][j]{
+					fmt.Fprint(_w, "#")
+				}else{
+					fmt.Fprint(_w, ".")
+				}
+			}
+			fmt.Fprintln(_w)
+			
+		}
+	}
+
 }
 
 func Contains(x int, nums ...int) bool {
