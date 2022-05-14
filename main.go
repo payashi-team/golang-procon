@@ -15,85 +15,52 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var H, W int
-	fmt.Fscan(_r, &H, &W)
-	field := make([][]byte, H)
-	for i := 0; i < H; i++ {
-		fmt.Fscan(_r, &field[i])
+	var N int
+	fmt.Fscan(_r, &N)
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		fmt.Fscan(_r, &A[i])
 	}
-	Solve(H, W, field)
+	ans := Solve(N, A)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(H, W int, field [][]byte) {
-	X := make([][]bool, H)
-	Y := make([][]bool, H)
-	for i := 0; i < H; i++ {
-		X[i] = make([]bool, W)
-		Y[i] = make([]bool, W)
-	}
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			black := true
-			for dx := -1; dx <= 1; dx++ {
-				for dy := -1; dy <= 1; dy++ {
-					nx := i + dx
-					ny := j + dy
-					if nx < 0 || H <= nx || ny < 0 || W <= ny {
-						continue
-					}
-					if field[nx][ny] != '#' {
-						black = false
-					}
-				}
-			}
-			if black {
-				X[i][j] = true
+func Solve(N int, A []int) int {
+	calc := func(i, j int) (int, int) {
+		takahashi := 0
+		aoki := 0
+		if i > j {
+			i, j = j, i
+		}
+		for k := i; k <= j; k++ {
+			if (k-i)%2 == 0 {
+				takahashi += A[k]
+			} else {
+				aoki += A[k]
 			}
 		}
+		return takahashi, aoki
 	}
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			if !X[i][j] {
+	ret := -INF
+	// takahashi's pos
+	for i := 0; i < N; i++ {
+		aoki := -INF
+		maxj := -1
+		// aoki's pos
+		for j := 0; j < N; j++ {
+			if i == j {
 				continue
 			}
-			Y[i][j] = true
-			for dx := -1; dx <= 1; dx++ {
-				for dy := -1; dy <= 1; dy++ {
-					nx := i + dx
-					ny := j + dy
-					if nx < 0 || H <= nx || ny < 0 || W <= ny {
-						continue
-					}
-					Y[nx][ny] = true
-				}
+			_, score := calc(i, j)
+			if score > aoki {
+				aoki = score
+				maxj = j
 			}
 		}
+		takahashi, _ := calc(i, maxj)
+		ret = MaxInt(ret, takahashi)
 	}
-	ok:=true
-	for i := 0; i < H; i++ {
-		for j := 0; j < W; j++ {
-			if (field[i][j]=='#')!=Y[i][j]{
-				ok = false
-			}
-		}
-	}
-	if !ok{
-		fmt.Fprintf(_w, "impossible\n")
-	}else{
-		fmt.Fprintf(_w, "possible\n")
-		for i := 0; i < H; i++ {
-			for j := 0; j < W; j++ {
-				if X[i][j]{
-					fmt.Fprint(_w, "#")
-				}else{
-					fmt.Fprint(_w, ".")
-				}
-			}
-			fmt.Fprintln(_w)
-			
-		}
-	}
-
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
