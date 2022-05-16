@@ -16,44 +16,24 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscanf(_r, "%d\n", &N)
-	R := make([]int, 0)
-	G := make([]int, 0)
-	B := make([]int, 0)
-	for i := 0; i < 2*N; i++ {
-		var v int
-		var c rune
-		fmt.Fscanf(_r, "%d %c\n", &v, &c)
-		if c == 'R' {
-			R = append(R, v)
-		} else if c == 'G' {
-			G = append(G, v)
-		} else {
-			B = append(B, v)
-		}
-	}
-	ans := Solve(N, R, G, B)
-	fmt.Fprintf(_w, "%d\n", ans)
+	var N, M int
+	fmt.Fscanf(_r, "%d %d\n", &N, &M)
+	a, b, c := Solve(N, M)
+	fmt.Fprintf(_w, "%d %d %d\n", a, b, c)
 }
 
-func Solve(N int, R, G, B []int) int {
-	sort.Ints(R)
-	sort.Ints(G)
-	sort.Ints(B)
-	if len(R)%2+len(G)%2+len(B)%2 == 0 {
-		return 0
+func Solve(N, M int) (int, int, int) {
+	if M < 2*N || 4*N < M {
+		return -1, -1, -1
 	}
-	// make len(R) even
-	if len(G)%2 == 0 {
-		R, G = G, R
-	} else if len(B)%2 == 0 {
-		R, B = B, R
+	for a := 0; a <= M/2; a++ {
+		b := -M + 4*N - 2*a
+		c := M - 3*N + a
+		if 0 <= b && 0 <= c {
+			return a, b, c
+		}
 	}
-	rg := MinDist(R, G)
-	rb := MinDist(R, B)
-	gb := MinDist(G, B)
-	return MinInt(rg+rb, gb)
+	return -1, -1, -1
 }
 
 // Both a and b are sorted
