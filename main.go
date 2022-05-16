@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 )
 
 const (
@@ -15,16 +16,60 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, X int
-	fmt.Fscan(_r, &N, &X)
-	ans := Solve(N, X)
-	for _, v := range ans {
-		fmt.Fprintf(_w, "%d ", v)
+	var N int
+	fmt.Fscanf(_r, "%d\n", &N)
+	R := make([]int, 0)
+	G := make([]int, 0)
+	B := make([]int, 0)
+	for i := 0; i < 2*N; i++ {
+		var v int
+		var c rune
+		fmt.Fscanf(_r, "%d %c\n", &v, &c)
+		if c == 'R' {
+			R = append(R, v)
+		} else if c == 'G' {
+			G = append(G, v)
+		} else {
+			B = append(B, v)
+		}
 	}
-	fmt.Fprintln(_w)
+	ans := Solve(N, R, G, B)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, X int) []int {
+func Solve(N int, R, G, B []int) int {
+	sort.Ints(R)
+	sort.Ints(G)
+	sort.Ints(B)
+	if len(R)%2+len(G)%2+len(B)%2 == 0 {
+		return 0
+	}
+	// make len(R) even
+	if len(G)%2 == 0 {
+		R, G = G, R
+	} else if len(B)%2 == 0 {
+		R, B = B, R
+	}
+	rg := MinDist(R, G)
+	rb := MinDist(R, B)
+	gb := MinDist(G, B)
+	return MinInt(rg+rb, gb)
+}
+
+// Both a and b are sorted
+func MinDist(a, b []int) int {
+	ret := INF
+	for _, v := range a {
+		idx := sort.Search(len(b), func(i int) bool { return v <= b[i] })
+		if idx == 0 {
+			ret = MinInt(ret, b[idx]-v)
+		} else if idx == len(b) {
+			ret = MinInt(ret, v-b[idx-1])
+		} else {
+			ret = MinInt(ret, b[idx]-v, v-b[idx-1])
+		}
+	}
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
