@@ -18,49 +18,33 @@ func main() {
 	defer _w.Flush()
 	var N int
 	fmt.Fscanf(_r, "%d\n", &N)
-	C := make([]int, N)
+	A := make([]int, N)
 	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &C[i])
+		fmt.Fscan(_r, &A[i])
 	}
-	edges := make([][]int, N)
-	for i := 0; i < N; i++ {
-		edges[i] = make([]int, 0)
-	}
-	for i := 0; i < N-1; i++ {
-		var a, b int
-		fmt.Fscan(_r, &a, &b)
-		a--
-		b--
-		edges[a] = append(edges[a], b)
-		edges[b] = append(edges[b], a)
-	}
-	ans := Solve(N, C, edges)
-	for _, v := range ans {
-		fmt.Fprintf(_w, "%d\n", v)
+	ans := Solve(N, A)
+	if ans {
+		fmt.Fprintf(_w, "Win\n")
+	} else {
+		fmt.Fprintf(_w, "Lose\n")
 	}
 }
 
-func Solve(N int, C []int, edges [][]int) []int {
-	ret := make([]int, 0)
-	used := make([]bool, N)
-	var dfs func(int, map[int]int)
-	dfs = func(u int, mp map[int]int) {
-		if mp[C[u]] == 0 {
-			ret = append(ret, u+1)
-		}
-		mp[C[u]]++
-		used[u] = true
-		for _, v := range edges[u] {
-			if used[v] {
-				continue
-			}
-			dfs(v, mp)
-		}
-		mp[C[u]]--
+func Solve(N int, A []int) bool {
+	if N&1 == 1 {
+		return true
 	}
-	dfs(0, make(map[int]int))
-	sort.Ints(ret)
-	return ret
+	xor := 0
+	for _, v := range A {
+		xor ^= v
+
+	}
+	for _, v := range A {
+		if xor == v {
+			return true
+		}
+	}
+	return false
 }
 
 // Both a and b are sorted
