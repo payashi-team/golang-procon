@@ -16,35 +16,41 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscanf(_r, "%d\n", &N)
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
-		fmt.Fscan(_r, &A[i])
-	}
-	ans := Solve(N, A)
-	if ans {
-		fmt.Fprintf(_w, "Win\n")
-	} else {
-		fmt.Fprintf(_w, "Lose\n")
-	}
+	var N, K int
+	S := make([]byte, N)
+	fmt.Fscan(_r, &N, &K, &S)
+	ans := Solve(N, K, S)
+	fmt.Fprintf(_w, "%c\n", ans)
 }
 
-func Solve(N int, A []int) bool {
-	if N&1 == 1 {
-		return true
-	}
-	xor := 0
-	for _, v := range A {
-		xor ^= v
+func Solve(N, K int, S []byte) byte {
+	win := func(a, b byte) byte {
+		if a == b {
+			return a
+		}
+		var r byte = 'R'
+		var p byte = 'P'
+		var s byte = 'S'
 
-	}
-	for _, v := range A {
-		if xor == v {
-			return true
+		if a+b == r+p {
+			return p
+		} else if a+b == r+s {
+			return r
+		} else {
+			return s
 		}
 	}
-	return false
+	for i := 0; i < K; i++ {
+		T := make([]byte, 2*N)
+		for j := 0; j < N; j++ {
+			T[j] = S[j]
+			T[j+N] = S[j]
+		}
+		for j := 0; j < N; j++ {
+			S[j] = win(T[2*j+1], T[2*j])
+		}
+	}
+	return S[0]
 }
 
 // Both a and b are sorted
