@@ -16,41 +16,42 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, K int
-	S := make([]byte, N)
-	fmt.Fscan(_r, &N, &K, &S)
-	ans := Solve(N, K, S)
-	fmt.Fprintf(_w, "%c\n", ans)
+	var N int
+	var S string
+	fmt.Fscan(_r, &N, &S)
+	ans := Solve(N, S)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, S []byte) byte {
-	win := func(a, b byte) byte {
-		if a == b {
-			return a
-		}
-		var r byte = 'R'
-		var p byte = 'P'
-		var s byte = 'S'
-
-		if a+b == r+p {
-			return p
-		} else if a+b == r+s {
-			return r
-		} else {
-			return s
+func Solve(N int, S string) int {
+	pairs := make([][]byte, 0)
+	chars := []byte{'A', 'B', 'X', 'Y'}
+	for _, c1 := range chars {
+		for _, c2 := range chars {
+			pairs = append(pairs, []byte{c1, c2})
 		}
 	}
-	for i := 0; i < K; i++ {
-		T := make([]byte, 2*N)
-		for j := 0; j < N; j++ {
-			T[j] = S[j]
-			T[j+N] = S[j]
+	count := func(p1, p2 []byte) int {
+		cnt := 0
+		for i := 0; i+2 <= N; i++ {
+			if S[i] == p1[0] && S[i+1] == p1[1] {
+				cnt++
+				i++
+			} else if S[i] == p2[0] && S[i+1] == p2[1] {
+				cnt++
+				i++
+			}
 		}
-		for j := 0; j < N; j++ {
-			S[j] = win(T[2*j+1], T[2*j])
+		return N - cnt
+	}
+	ans := INF
+	M := len(pairs)
+	for i := 0; i < M; i++ {
+		for j := i + 1; j < M; j++ {
+			ans = MinInt(ans, count(pairs[i], pairs[j]))
 		}
 	}
-	return S[0]
+	return ans
 }
 
 // Both a and b are sorted
