@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 )
 
 const (
@@ -16,56 +15,39 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	var S string
-	fmt.Fscan(_r, &N, &S)
-	ans := Solve(N, S)
+	var N, M int
+	fmt.Fscan(_r, &N, &M)
+	dist := make([][]int, N)
+	for i := 0; i < N; i++ {
+		dist[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			dist[i][j] = INF
+		}
+		dist[i][i] = 0
+	}
+	for i := 0; i < M; i++ {
+		var a, b, t int
+		fmt.Fscan(_r, &a, &b, &t)
+		a--
+		b--
+		dist[a][b] = t
+		dist[b][a] = t
+	}
+	ans := Solve(N, M, dist)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, S string) int {
-	pairs := make([][]byte, 0)
-	chars := []byte{'A', 'B', 'X', 'Y'}
-	for _, c1 := range chars {
-		for _, c2 := range chars {
-			pairs = append(pairs, []byte{c1, c2})
-		}
-	}
-	count := func(p1, p2 []byte) int {
-		cnt := 0
-		for i := 0; i+2 <= N; i++ {
-			if S[i] == p1[0] && S[i+1] == p1[1] {
-				cnt++
-				i++
-			} else if S[i] == p2[0] && S[i+1] == p2[1] {
-				cnt++
-				i++
+func Solve(N, M int, dist [][]int) int {
+	for k := 0; k < N; k++ {
+		for i := 0; i < N; i++ {
+			for j := 0; j < N; j++ {
+				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
 			}
 		}
-		return N - cnt
 	}
-	ans := INF
-	M := len(pairs)
-	for i := 0; i < M; i++ {
-		for j := i + 1; j < M; j++ {
-			ans = MinInt(ans, count(pairs[i], pairs[j]))
-		}
-	}
-	return ans
-}
-
-// Both a and b are sorted
-func MinDist(a, b []int) int {
 	ret := INF
-	for _, v := range a {
-		idx := sort.Search(len(b), func(i int) bool { return v <= b[i] })
-		if idx == 0 {
-			ret = MinInt(ret, b[idx]-v)
-		} else if idx == len(b) {
-			ret = MinInt(ret, v-b[idx-1])
-		} else {
-			ret = MinInt(ret, b[idx]-v, v-b[idx-1])
-		}
+	for i := 0; i < N; i++ {
+		ret = MinInt(ret, MaxInt(dist[i]...))
 	}
 	return ret
 }
