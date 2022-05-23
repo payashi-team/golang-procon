@@ -15,39 +15,32 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N, M int
-	fmt.Fscan(_r, &N, &M)
-	dist := make([][]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			dist[i][j] = INF
-		}
-		dist[i][i] = 0
+	var N int
+	fmt.Fscan(_r, &N)
+	ans := Solve(N)
+	for _, v := range ans {
+		fmt.Fprintf(_w, "%d ", v)
 	}
-	for i := 0; i < M; i++ {
-		var a, b, t int
-		fmt.Fscan(_r, &a, &b, &t)
-		a--
-		b--
-		dist[a][b] = t
-		dist[b][a] = t
-	}
-	ans := Solve(N, M, dist)
-	fmt.Fprintf(_w, "%d\n", ans)
+	fmt.Fprintln(_w)
 }
 
-func Solve(N, M int, dist [][]int) int {
-	for k := 0; k < N; k++ {
-		for i := 0; i < N; i++ {
-			for j := 0; j < N; j++ {
-				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
-			}
+func Solve(N int) []int {
+	nums := make([]bool, 10001)
+	init := []int{6, 10, 15}
+	if N==3{
+		return init
+	}
+	for _, v := range init {
+		for i := v; i <= 10000; i += v {
+			nums[i] = true
 		}
 	}
-	ret := INF
-	for i := 0; i < N; i++ {
-		ret = MinInt(ret, MaxInt(dist[i]...))
+	ret := make([]int, 0)
+	for i := 0; i <= 10000 && N > 0; i++ {
+		if nums[i] {
+			ret = append(ret, i)
+			N--
+		}
 	}
 	return ret
 }
