@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 )
 
 const (
@@ -15,24 +16,10 @@ const (
 
 func main() {
 	defer _w.Flush()
-	var N int
-	fmt.Fscan(_r, &N)
-	fmt.Fprintf(_w, "%d\n", Solve(N))
-}
-
-func Solve(N int) int {
-
-	f := func(a, b int) int {
-		return a*a*a + a*a*b + a*b*b + b*b*b
-	}
-	j := int(1e6)
-	X := INF
-	for i := 0; j >= 0 && i <= int(1e6); i++ {
-		for ; j >= 0 && f(i, j) >= N; j-- {
-			X = MinInt(X, f(i, j))
-		}
-	}
-	return X
+	_s.Split(bufio.ScanWords)
+	_s.Buffer([]byte{}, math.MaxInt32)
+	N := ScanInt()
+	fmt.Printf("%c\n", N)
 }
 
 func Contains(x int, nums ...int) bool {
@@ -72,4 +59,13 @@ func MinInt(nums ...int) int {
 	return ret
 }
 
-var _r, _w = bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+func ScanInt() int {
+	_s.Scan()
+	num, err := strconv.Atoi(_s.Text())
+	if err != nil {
+		panic(err)
+	}
+	return num
+}
+
+var _s, _w = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout)
