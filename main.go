@@ -19,7 +19,44 @@ func main() {
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
 	N := ScanInt()
-	fmt.Printf("%c\n", N)
+	fmt.Printf("%d\n", Solve(N))
+}
+
+func Solve(N int) int {
+	prime := make([]bool, int(1e6))
+	for i := 2; i < int(1e6); i++ {
+		prime[i] = true
+	}
+	for i := 2; i < int(1e6); i++ {
+		if !prime[i] {
+			continue
+		}
+		for j := i * 2; j < int(1e6); j += i {
+			prime[j] = false
+		}
+	}
+	sum := make([]int, int(1e6))
+	for i := 1; i < int(1e6); i++ {
+		if prime[i] {
+			sum[i] = sum[i-1] + 1
+		} else {
+			sum[i] = sum[i-1]
+		}
+	}
+	ret := 0
+	for q := 2; q < int(1e6); q++ {
+		if !prime[q] {
+			continue
+		}
+		p := N / (q * q * q)
+		p = MinInt(p, q-1)
+		if p == 0 {
+			break
+		}
+		// fmt.Printf("p: %d, q: %d\n", p, q)
+		ret += sum[p]
+	}
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
@@ -69,3 +106,4 @@ func ScanInt() int {
 }
 
 var _s, _w = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout)
+
