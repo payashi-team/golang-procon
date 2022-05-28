@@ -18,45 +18,74 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N := ScanInt()
-	fmt.Printf("%d\n", Solve(N))
+	N, M, Q := ScanInt(), ScanInt(), ScanInt()
+	row := make([]int, N)
+	for i := 0; i < N; i++ {
+		row[i] = -1
+	}
+	st := NewSegTree(M + 1)
+	for q := 0; q < Q; q++ {
+		cmd := ScanInt()
+		switch cmd {
+		case 1:
+			l, r, x := ScanInt(), ScanInt(), ScanInt()
+			st.Add(l-1, x)
+			st.Add(r, -x)
+		case 2:
+			i, x := ScanInt(), ScanInt()
+			row[i-1] += x
+		case 3:
+			i, j := ScanInt(), ScanInt()
+			ret := 0
+			ret += row[i-1]
+			ret += st.Query(0, j)
+			fmt.Fprintf(_w, "%d\n", ret)
+		}
+		fmt.Fprintf(_w, "%v\n", st.nodes)
+		fmt.Fprintf(_w, "%v\n", row)
+	}
 }
 
-func Solve(N int) int {
-	prime := make([]bool, int(1e6))
-	for i := 2; i < int(1e6); i++ {
-		prime[i] = true
+type SegTree struct {
+	n     int
+	nodes []int
+}
+
+func NewSegTree(n int) *SegTree {
+	st := new(SegTree)
+	st.n = 1
+	for st.n < n {
+		st.n *= 2
 	}
-	for i := 2; i < int(1e6); i++ {
-		if !prime[i] {
-			continue
-		}
-		for j := i * 2; j < int(1e6); j += i {
-			prime[j] = false
-		}
+	st.nodes = make([]int, st.n*2-1)
+	return st
+}
+
+func (st *SegTree) Add(pos, x int) {
+	pos += st.n - 1
+	for pos > 0 {
+		par := (pos - 1) / 2
+		st.nodes[pos] += x
+		pos = par
 	}
-	sum := make([]int, int(1e6))
-	for i := 1; i < int(1e6); i++ {
-		if prime[i] {
-			sum[i] = sum[i-1] + 1
+	st.nodes[0] += x
+}
+
+func (st *SegTree) Query(l, r int) int {
+	var dfs func(int, int, int) int
+	dfs = func(lb, ub, k int) int {
+		if l <= lb && ub <= r {
+			return st.nodes[k]
+		} else if ub <= l || r <= lb {
+			return 0
 		} else {
-			sum[i] = sum[i-1]
+			mid := (lb + ub) / 2
+			lv := dfs(lb, mid, 2*k+1)
+			rv := dfs(mid, ub, 2*k+2)
+			return lv + rv
 		}
 	}
-	ret := 0
-	for q := 2; q < int(1e6); q++ {
-		if !prime[q] {
-			continue
-		}
-		p := N / (q * q * q)
-		p = MinInt(p, q-1)
-		if p == 0 {
-			break
-		}
-		// fmt.Printf("p: %d, q: %d\n", p, q)
-		ret += sum[p]
-	}
-	return ret
+	return dfs(0, st.n, 0)
 }
 
 func Contains(x int, nums ...int) bool {
@@ -106,4 +135,3 @@ func ScanInt() int {
 }
 
 var _s, _w = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout)
-
