@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -18,74 +19,22 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N, M, Q := ScanInt(), ScanInt(), ScanInt()
-	row := make([]int, N)
+	N, K := ScanInt(), ScanInt()
+	R := make([]int, N)
 	for i := 0; i < N; i++ {
-		row[i] = -1
+		R[i] = ScanInt()
 	}
-	st := NewSegTree(M + 1)
-	for q := 0; q < Q; q++ {
-		cmd := ScanInt()
-		switch cmd {
-		case 1:
-			l, r, x := ScanInt(), ScanInt(), ScanInt()
-			st.Add(l-1, x)
-			st.Add(r, -x)
-		case 2:
-			i, x := ScanInt(), ScanInt()
-			row[i-1] += x
-		case 3:
-			i, j := ScanInt(), ScanInt()
-			ret := 0
-			ret += row[i-1]
-			ret += st.Query(0, j)
-			fmt.Fprintf(_w, "%d\n", ret)
-		}
-		fmt.Fprintf(_w, "%v\n", st.nodes)
-		fmt.Fprintf(_w, "%v\n", row)
-	}
+	ans := Solve(N, K, R)
+	fmt.Fprintf(_w, "%.8f\n", ans)
 }
 
-type SegTree struct {
-	n     int
-	nodes []int
-}
-
-func NewSegTree(n int) *SegTree {
-	st := new(SegTree)
-	st.n = 1
-	for st.n < n {
-		st.n *= 2
+func Solve(N, K int, R []int) float64 {
+	sort.Slice(R, func(i, j int) bool { return R[i] > R[j] })
+	ans := .0
+	for k := 1; k <= K; k++ {
+		ans += float64(R[k-1]) * math.Pow(0.5, float64(k))
 	}
-	st.nodes = make([]int, st.n*2-1)
-	return st
-}
-
-func (st *SegTree) Add(pos, x int) {
-	pos += st.n - 1
-	for pos > 0 {
-		par := (pos - 1) / 2
-		st.nodes[pos] += x
-		pos = par
-	}
-	st.nodes[0] += x
-}
-
-func (st *SegTree) Query(l, r int) int {
-	var dfs func(int, int, int) int
-	dfs = func(lb, ub, k int) int {
-		if l <= lb && ub <= r {
-			return st.nodes[k]
-		} else if ub <= l || r <= lb {
-			return 0
-		} else {
-			mid := (lb + ub) / 2
-			lv := dfs(lb, mid, 2*k+1)
-			rv := dfs(mid, ub, 2*k+2)
-			return lv + rv
-		}
-	}
-	return dfs(0, st.n, 0)
+	return ans
 }
 
 func Contains(x int, nums ...int) bool {
