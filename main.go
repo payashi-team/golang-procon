@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -19,22 +18,30 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N, K := ScanInt(), ScanInt()
-	R := make([]int, N)
-	for i := 0; i < N; i++ {
-		R[i] = ScanInt()
-	}
-	ans := Solve(N, K, R)
-	fmt.Fprintf(_w, "%.8f\n", ans)
+	B, C := ScanInt(), ScanInt()
+	ans := Solve(B, C)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, K int, R []int) float64 {
-	sort.Slice(R, func(i, j int) bool { return R[i] > R[j] })
-	ans := .0
-	for k := 1; k <= K; k++ {
-		ans += float64(R[k-1]) * math.Pow(0.5, float64(k))
+func Solve(B, C int) int {
+	var Mp, Mm int
+	var mp, mm int
+	if B > 0 {
+		Mp = B + (C-2)/2
+		Mm = -B - (C-1)/2
+		mp = MaxInt(0, B-C/2)
+		mm = MinInt(0, -B+(C-1)/2)
+	} else {
+		Mp = -B + (C-1)/2
+		Mm = B - C/2
+		mp = MaxInt(0, -B-(C-1)/2)
+		mm = MinInt(0, B+(C-2)/2)
 	}
-	return ans
+	if mp == mm {
+		return Mp - Mm + 1
+	} else {
+		return (Mp - mp + 1) + (mm - Mm + 1)
+	}
 }
 
 func Contains(x int, nums ...int) bool {
