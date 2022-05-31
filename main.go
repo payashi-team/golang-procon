@@ -18,30 +18,27 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	B, C := ScanInt(), ScanInt()
-	ans := Solve(B, C)
+	_s.Scan()
+	S := _s.Text()
+	ans := Solve(S)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(B, C int) int {
-	var Mp, Mm int
-	var mp, mm int
-	if B > 0 {
-		Mp = B + (C-2)/2
-		Mm = -B - (C-1)/2
-		mp = MaxInt(0, B-C/2)
-		mm = MinInt(0, -B+(C-1)/2)
-	} else {
-		Mp = -B + (C-1)/2
-		Mm = B - C/2
-		mp = MaxInt(0, -B-(C-1)/2)
-		mm = MinInt(0, B+(C-2)/2)
+func Solve(S string) int {
+	N := len(S)
+	ret := 0
+	cnt := make(map[byte]int)
+	for i := N - 1; i >= 1; i-- {
+		if S[i] == S[i-1] {
+			ret += (N - 1 - i) - cnt[S[i]]
+			cnt = make(map[byte]int)
+			cnt[S[i]] = N - 1 - i + 2
+			i--
+		} else {
+			cnt[S[i]]++
+		}
 	}
-	if mp == mm {
-		return Mp - Mm + 1
-	} else {
-		return (Mp - mp + 1) + (mm - Mm + 1)
-	}
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
