@@ -18,27 +18,38 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	_s.Scan()
-	S := _s.Text()
-	ans := Solve(S)
+	N := ScanInt()
+	B := make([]int, N)
+	for i := 1; i < N; i++ {
+		B[i] = ScanInt() - 1
+	}
+	ans := Solve(N, B)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(S string) int {
-	N := len(S)
-	ret := 0
-	cnt := make(map[byte]int)
-	for i := N - 1; i >= 1; i-- {
-		if S[i] == S[i-1] {
-			ret += (N - 1 - i) - cnt[S[i]]
-			cnt = make(map[byte]int)
-			cnt[S[i]] = N - 1 - i + 2
-			i--
-		} else {
-			cnt[S[i]]++
-		}
+func Solve(N int, B []int) int {
+	edges := make([][]int, N)
+	for i := 0; i < N; i++ {
+		edges[i] = make([]int, 0)
 	}
-	return ret
+	for i := 1; i < N; i++ {
+		edges[B[i]] = append(edges[B[i]], i)
+	}
+	var dfs func(int) int
+	dfs = func(pos int) int {
+		if len(edges[pos]) == 0 {
+			return 1
+		}
+		min := INF
+		max := 0
+		for _, v := range edges[pos] {
+			pay := dfs(v)
+			min = MinInt(min, pay)
+			max = MaxInt(max, pay)
+		}
+		return min + max + 1
+	}
+	return dfs(0)
 }
 
 func Contains(x int, nums ...int) bool {
