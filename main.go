@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -19,37 +20,27 @@ func main() {
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
 	N := ScanInt()
-	B := make([]int, N)
-	for i := 1; i < N; i++ {
-		B[i] = ScanInt() - 1
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		A[i] = ScanInt()
 	}
-	ans := Solve(N, B)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, B []int) int {
-	edges := make([][]int, N)
-	for i := 0; i < N; i++ {
-		edges[i] = make([]int, 0)
-	}
+func Solve(N int, A []int) int {
+	sort.Ints(A)
+	ret := A[0] * A[0]
+	ret %= MOD
+	sum := 0
 	for i := 1; i < N; i++ {
-		edges[B[i]] = append(edges[B[i]], i)
+		sum = sum*2 + A[i-1]
+		sum %= MOD
+		ret += (A[i] * sum) % MOD
+		ret += A[i] * A[i] % MOD
+		ret %= MOD
 	}
-	var dfs func(int) int
-	dfs = func(pos int) int {
-		if len(edges[pos]) == 0 {
-			return 1
-		}
-		min := INF
-		max := 0
-		for _, v := range edges[pos] {
-			pay := dfs(v)
-			min = MinInt(min, pay)
-			max = MaxInt(max, pay)
-		}
-		return min + max + 1
-	}
-	return dfs(0)
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
