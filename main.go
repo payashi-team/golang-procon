@@ -19,28 +19,49 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N := ScanInt()
+	N, K := ScanInt(), ScanInt()
 	A := make([]int, N)
 	for i := 0; i < N; i++ {
 		A[i] = ScanInt()
 	}
-	ans := Solve(N, A)
+	ans := Solve(N, K, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, A []int) int {
-	sort.Ints(A)
-	ret := A[0] * A[0]
-	ret %= MOD
-	sum := 0
-	for i := 1; i < N; i++ {
-		sum = sum*2 + A[i-1]
-		sum %= MOD
-		ret += (A[i] * sum) % MOD
-		ret += A[i] * A[i] % MOD
-		ret %= MOD
+type Item struct {
+	val, idx int
+}
+
+func Solve(N, K int, A []int) int {
+	items := make([]Item, N)
+	for i := 0; i < N; i++ {
+		items[i] = Item{A[i], i}
 	}
-	return ret
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].val != items[j].val {
+			return items[i].val < items[j].val
+		} else {
+			return items[i].idx > items[j].idx
+		}
+	})
+	pos := -1
+	ret := INF
+	for i := 0; i < N; i++ {
+		if items[i].idx >= K {
+			if pos == -1 {
+				continue
+			}
+			ret = MinInt(ret, items[i].idx-pos)
+		} else {
+			pos = MaxInt(pos, items[i].idx)
+		}
+	}
+	if ret == INF {
+		return -1
+	} else {
+		return ret
+	}
+
 }
 
 func Contains(x int, nums ...int) bool {
