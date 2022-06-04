@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -19,49 +18,41 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N, K := ScanInt(), ScanInt()
-	A := make([]int, N)
+	N, M := ScanInt(), ScanInt()
+	edges := make([][]int, N)
 	for i := 0; i < N; i++ {
-		A[i] = ScanInt()
+		edges[i] = make([]int, 0)
 	}
-	ans := Solve(N, K, A)
-	fmt.Fprintf(_w, "%d\n", ans)
-}
-
-type Item struct {
-	val, idx int
-}
-
-func Solve(N, K int, A []int) int {
-	items := make([]Item, N)
-	for i := 0; i < N; i++ {
-		items[i] = Item{A[i], i}
+	for i := 0; i < M; i++ {
+		a, b := ScanInt()-1, ScanInt()-1
+		edges[a] = append(edges[a], b)
+		edges[b] = append(edges[b], a)
 	}
-	sort.Slice(items, func(i, j int) bool {
-		if items[i].val != items[j].val {
-			return items[i].val < items[j].val
-		} else {
-			return items[i].idx > items[j].idx
-		}
-	})
-	pos := -1
-	ret := INF
-	for i := 0; i < N; i++ {
-		if items[i].idx >= K {
-			if pos == -1 {
-				continue
+	Q := ScanInt()
+	for i := 0; i < Q; i++ {
+		x, k := ScanInt()-1, ScanInt()
+		que := make([]int, 0)
+		que = append(que, x)
+		used := []int{x}
+		for t := 0; t < k; t++ {
+			nextQue := make([]int, 0)
+			for _, u := range que {
+				for _, v := range edges[u] {
+					if Contains(v, used...) {
+						continue
+					}
+					nextQue = append(nextQue, v)
+					used = append(used, v)
+				}
 			}
-			ret = MinInt(ret, items[i].idx-pos)
-		} else {
-			pos = MaxInt(pos, items[i].idx)
+			que = nextQue
 		}
+		ret := 0
+		for _, v := range used {
+			ret += v + 1
+		}
+		fmt.Fprintf(_w, "%d\n", ret)
 	}
-	if ret == INF {
-		return -1
-	} else {
-		return ret
-	}
-
 }
 
 func Contains(x int, nums ...int) bool {
