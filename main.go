@@ -19,37 +19,26 @@ func main() {
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
 	N := ScanInt()
-	bits := make([]bool, N)
+	A := make([]int, N)
 	for i := 0; i < N; i++ {
-		if ScanInt() == 1 {
-			bits[i] = true
-		}
+		A[i] = ScanInt()
 	}
-	ans := Solve(N, bits)
+	ans := Solve(N, A)
 	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N int, bits []bool) int {
-	nums := make([]int, N+1)
-	for i := 0; i < N; i++ {
-		if bits[i] {
-			nums[i+1] = nums[i] - 1
-		} else {
-			nums[i+1] = nums[i] + 1
-		}
+func Solve(N int, A []int) int {
+	nums := make(map[int]int)
+	for _, v := range A {
+		nums[v]++
 	}
-	maxs := make([]int, N+1)
-	mins := make([]int, N+1)
-	for i := 0; i < N; i++ {
-		maxs[i+1] = MaxInt(maxs[i], nums[i])
-		mins[i+1] = MinInt(mins[i], nums[i])
+	ret := N * (N - 1) * (N - 2) / 6
+	for _, v := range nums {
+		cnt := v * (v - 1) * (v - 2) / 6
+		cnt += v * (v - 1) / 2 * (N - v)
+		ret -= cnt
 	}
-	var max, min int
-	for i := 0; i < N; i++ {
-		max = MaxInt(max, nums[i+1]-mins[i])
-		min = MinInt(min, nums[i+1]-maxs[i])
-	}
-	return max - min + 1
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
