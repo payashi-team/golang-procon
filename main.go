@@ -18,27 +18,35 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	_s.Buffer([]byte{}, math.MaxInt32)
-	N := ScanInt()
-	A := make([]int, N)
-	for i := 0; i < N; i++ {
+	N, M := ScanInt(), ScanInt()
+	A := make([]int, N+1)
+	C := make([]int, N+M+1)
+	for i := 0; i <= N; i++ {
 		A[i] = ScanInt()
 	}
-	ans := Solve(N, A)
-	fmt.Fprintf(_w, "%d\n", ans)
+	for i := 0; i <= N+M; i++ {
+		C[i] = ScanInt()
+	}
+	B := Solve(N, M, A, C)
+	for _, v := range B {
+		fmt.Fprintf(_w, "%d ", v)
+	}
+	fmt.Fprintln(_w)
 }
 
-func Solve(N int, A []int) int {
-	nums := make(map[int]int)
-	for _, v := range A {
-		nums[v]++
+func Solve(N, M int, A, C []int) []int {
+	B := make([]int, M+1)
+	for i := M; i >= 0; i-- {
+		B[i] = C[i+N]
+		for j := 1; i+j <= M; j++ {
+			if N-j<0{
+				continue
+			}
+			B[i] -= B[i+j] * A[N-j]
+		}
+		B[i] /= A[N]
 	}
-	ret := N * (N - 1) * (N - 2) / 6
-	for _, v := range nums {
-		cnt := v * (v - 1) * (v - 2) / 6
-		cnt += v * (v - 1) / 2 * (N - v)
-		ret -= cnt
-	}
-	return ret
+	return B
 }
 
 func Contains(x int, nums ...int) bool {
