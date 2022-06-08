@@ -16,37 +16,39 @@ const (
 
 func main() {
 	defer _w.Flush()
-	_s.Split(bufio.ScanWords)
-	_s.Buffer([]byte{}, math.MaxInt32)
-	N, M := ScanInt(), ScanInt()
-	A := make([]int, N+1)
-	C := make([]int, N+M+1)
-	for i := 0; i <= N; i++ {
-		A[i] = ScanInt()
+	var N, L int
+	fmt.Scan(&N, &L)
+	field := make([][]bool, L)
+	for i := 0; i < L; i++ {
+		field[i] = make([]bool, N-1)
+		_s.Scan()
+		S := _s.Text()
+		for j := 0; j < N-1; j++ {
+			field[i][j] = S[2*j+1] == '-'
+		}
 	}
-	for i := 0; i <= N+M; i++ {
-		C[i] = ScanInt()
+	_s.Scan()
+	T := _s.Text()
+	pos := -1
+	for j := 0; j < N; j++ {
+		if T[2*j] == 'o' {
+			pos = j
+			break
+		}
 	}
-	B := Solve(N, M, A, C)
-	for _, v := range B {
-		fmt.Fprintf(_w, "%d ", v)
-	}
-	fmt.Fprintln(_w)
+	ans := Solve(N, L, field, pos)
+	fmt.Fprintf(_w, "%d\n", ans)
 }
 
-func Solve(N, M int, A, C []int) []int {
-	B := make([]int, M+1)
-	for i := M; i >= 0; i-- {
-		B[i] = C[i+N]
-		for j := 1; i+j <= M; j++ {
-			if N-j<0{
-				continue
-			}
-			B[i] -= B[i+j] * A[N-j]
+func Solve(N, L int, field [][]bool, pos int) int {
+	for i := L - 1; i >= 0; i-- {
+		if pos-1 >= 0 && field[i][pos-1] {
+			pos--
+		} else if pos < N-1 && field[i][pos] {
+			pos++
 		}
-		B[i] /= A[N]
 	}
-	return B
+	return pos + 1
 }
 
 func Contains(x int, nums ...int) bool {
@@ -95,4 +97,4 @@ func ScanInt() int {
 	return num
 }
 
-var _s, _w = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout)
+var _s, _w, _r = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdout)
