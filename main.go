@@ -17,61 +17,28 @@ const (
 
 func main() {
 	defer _w.Flush()
-	N := ScanInt()
-	ans := Solve(N)
-	fmt.Fprintf(_w, "%d\n", ans)
+	_s.Split(bufio.ScanWords)
+	N := nextInt()
+	P := make([]int, N)
+	I := make([]int, N)
+	for i := 0; i < N; i++ {
+		P[i] = nextInt() - 1
+	}
+	for i := 0; i < N; i++ {
+		I[i] = nextInt() - 1
+	}
+	Solve(N, P, I)
 }
 
-type Matrix [][]int
-
-func NewMatrix(n, m int) Matrix {
-	mtx := make(Matrix, n)
-	for i := 0; i < n; i++ {
-		mtx[i] = make([]int, m)
+func Solve(N int, P, I []int) {
+	mp := make(map[int]int)
+	for i := 0; i < N; i++ {
+		mp[I[i]] = i
 	}
-	return mtx
-}
-
-// (n, m) * (m, l)
-func Multiple(a, b Matrix) Matrix {
-	n, m, l := len(a), len(a[0]), len(b[0])
-	c := NewMatrix(n, l)
-	for i := 0; i < n; i++ {
-		for j := 0; j < l; j++ {
-			for k := 0; k < m; k++ {
-				c[i][j] += a[i][k] * b[k][j]
-				c[i][j] %= MOD
-			}
-		}
+	for i := 0; i < N; i++ {
+		P[i] = mp[P[i]]
 	}
-	return c
-}
-
-func Power(a Matrix, p int) Matrix {
-	n := len(a)
-	ret := NewMatrix(n, n)
-	for i := 0; i < n; i++ {
-		ret[i][i] = 1
-	}
-	for p > 0 {
-		if p&1 == 1 {
-			ret = Multiple(ret, a)
-		}
-		a = Multiple(a, a)
-		p >>= 1
-	}
-	return ret
-}
-
-func Solve(N int) int {
-	A := [][]int{
-		{0, 1, 0},
-		{0, 0, 1},
-		{1, 1, 1},
-	}
-	A = Power(A, N-1)
-	return A[0][2]
-
+	fmt.Printf("%v\n", P)
 }
 
 func Contains(x int, nums ...int) bool {
@@ -111,13 +78,18 @@ func MinInt(nums ...int) int {
 	return ret
 }
 
-func ScanInt() int {
+func nextInt() int {
 	_s.Scan()
-	num, err := strconv.Atoi(_s.Text())
-	if err != nil {
-		panic(err)
+	i, e := strconv.Atoi(_s.Text())
+	if e != nil {
+		panic(e)
 	}
-	return num
+	return i
 }
+
+// func nextLine() string {
+// 	_s.Scan()
+// 	return _s.Text()
+// }
 
 var _s, _w, _r = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdout)
