@@ -31,14 +31,43 @@ func main() {
 }
 
 func Solve(N int, P, I []int) {
-	mp := make(map[int]int)
+	Iinv := make([]int, N) // Iinv[I[i]] = i
 	for i := 0; i < N; i++ {
-		mp[I[i]] = i
+		Iinv[I[i]] = i
 	}
+	L := make([]int, N)
+	R := make([]int, N)
 	for i := 0; i < N; i++ {
-		P[i] = mp[P[i]]
+		L[i] = -1
+		R[i] = -1
 	}
-	fmt.Printf("%v\n", P)
+	var dfs func(int, int, int, int) bool
+	dfs = func(pl, pr, il, ir int) bool {
+		idx := Iinv[P[pl]]
+		if idx < il || ir <= idx {
+			return false
+		}
+		if idx > il {
+			L[P[pl]] = P[pl+1]
+			if !dfs(pl+1, pl+1+(idx-il), il, idx) {
+				return false
+			}
+		}
+		if ir > idx+1 {
+			R[P[pl]] = P[pl+1+(idx-il)]
+			if !dfs(pl+1+(idx-il), pr, idx+1, ir) {
+				return false
+			}
+		}
+		return true
+	}
+	if P[0] != 0 || !dfs(0, N, 0, N) {
+		fmt.Fprintf(_w, "-1\n")
+	} else {
+		for i := 0; i < N; i++ {
+			fmt.Fprintf(_w, "%d %d\n", L[i]+1, R[i]+1)
+		}
+	}
 }
 
 func Contains(x int, nums ...int) bool {
