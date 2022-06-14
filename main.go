@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
+	"strconv"
 )
 
 const (
@@ -13,99 +15,65 @@ const (
 	MOD = 998244353
 )
 
+var _w, _r, _s = bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdin), bufio.NewScanner(os.Stdout)
+
 func main() {
-	var _w, _r = bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdout)
 	defer _w.Flush()
-	var N int
-	var S []byte
-	fmt.Fscan(_r, &N, &S)
-	ans := Solve(N, S)
-	fmt.Fprintf(_w, "%s\n", ans)
+	var N, M, Q int
+	fmt.Fscan(_r, &N, &M, &Q)
+	items := make([]Item, N)
+	for i := 0; i < N; i++ {
+		item := &items[i]
+		fmt.Fscan(_r, &item.w, &item.v)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].v != items[j].v {
+			return items[i].v > items[j].v
+		} else {
+			return items[i].w > items[j].w
+		}
+	})
+	X := make([]Box, M)
+	for i := 0; i < M; i++ {
+		fmt.Fscan(_r, &X[i].cap)
+		X[i].idx = i
+	}
+	sort.Slice(X, func(i, j int) bool {
+		return X[i].cap < X[j].cap
+	})
+	for q := 0; q < Q; q++ {
+		var l, r int
+		fmt.Fscan(_r, &l, &r)
+		l--
+		r--
+		ret := 0
+		used := make([]bool, N)
+		for i := 0; i < M; i++ {
+			if l <= X[i].idx && X[i].idx <= r {
+				continue
+			}
+			for j := 0; j < N; j++ {
+				if used[j] {
+					continue
+				}
+				if X[i].cap >= items[j].w {
+					used[j] = true
+					ret += items[j].v
+					break
+				}
+			}
+		}
+		// fmt.Fprintf(_w, "%d\n", ret)
+		fmt.Printf("%d\n", ret)
+	}
 }
 
 type Item struct {
-	val, idx int
+	w, v int
 }
 
-type SegTree struct {
-	n     int
-	nodes []Item
-	f     func(Item, Item) Item
-}
-
-func NewSegTree(data []int) *SegTree {
-	st := new(SegTree)
-	st.n = 1
-	for st.n < len(data) {
-		st.n *= 2
-	}
-	st.nodes = make([]Item, st.n*2-1)
-	for i := st.n - 1; i < st.n*2-1; i++ {
-		if i-(st.n-1) < len(data) {
-			st.nodes[i] = Item{data[i-(st.n-1)], i - (st.n - 1)}
-		} else {
-			st.nodes[i] = Item{INF, -1}
-		}
-	}
-	st.f = func(a, b Item) Item {
-		if a.val < b.val {
-			return a
-		} else if a.val > b.val {
-			return b
-		} else {
-			if a.idx < b.idx {
-				return b
-			} else {
-				return a
-			}
-		}
-	}
-	for i := st.n - 2; i >= 0; i-- {
-		l, r := i*2+1, i*2+2
-		st.nodes[i] = st.f(st.nodes[l], st.nodes[r])
-	}
-	return st
-}
-
-func (st *SegTree) Query(l, r int) Item {
-	var dfs func(int, int, int) Item
-	dfs = func(k, lb, ub int) Item {
-		if l <= lb && ub <= r {
-			return st.nodes[k]
-		} else if ub <= l || r <= lb {
-			return Item{INF, -1}
-		} else {
-			mid := (lb + ub) / 2
-			lv := dfs(2*k+1, lb, mid)
-			rv := dfs(2*k+2, mid, ub)
-			return st.f(lv, rv)
-		}
-	}
-	return dfs(0, 0, st.n)
-}
-
-func Solve(N int, S []byte) string {
-	data := make([]int, N)
-	for i := 0; i < N; i++ {
-		data[i] = int(S[i] - 'a')
-	}
-	T := make([]byte, N)
-	for i := 0; i < N; i++ {
-		T[i] = S[i]
-	}
-	st := NewSegTree(data)
-	l, r := 0, N
-	for l+1 < r {
-		item := st.Query(l+1, r)
-		// fmt.Printf("l: %d, r: %d, nextr: %d\n", l, r, item.idx)
-		if item.val != INF && item.val < data[l] {
-			// swap l, item.idx
-			T[l], T[item.idx] = T[item.idx], T[l]
-			r = item.idx
-		}
-		l++
-	}
-	return string(T)
+type Box struct {
+	cap, idx int
 }
 
 func Contains(x int, nums ...int) bool {
@@ -145,16 +113,16 @@ func MinInt(nums ...int) int {
 	return ret
 }
 
-// func nextInt() int {
-// 	_s.Scan()
-// 	i, e := strconv.Atoi(_s.Text())
-// 	if e != nil {
-// 		panic(e)
-// 	}
-// 	return i
-// }
+func nextInt() int {
+	_s.Scan()
+	i, e := strconv.Atoi(_s.Text())
+	if e != nil {
+		panic(e)
+	}
+	return i
+}
 
-// func nextLine() string {
-// 	_s.Scan()
-// 	return _s.Text()
-// }
+func nextLine() string {
+	_s.Scan()
+	return _s.Text()
+}
