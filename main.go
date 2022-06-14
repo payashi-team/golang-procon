@@ -5,69 +5,107 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"strconv"
 )
 
 const (
 	INF = int(1 << 61)
 	// MOD = int(1e9 + 7)
-	// MOD = 998244353
-	MOD = 10007
+	MOD = 998244353
 )
 
 func main() {
+	var _w, _r = bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdout)
 	defer _w.Flush()
-	_s.Split(bufio.ScanWords)
-	N := nextInt()
-	P := make([]int, N)
-	I := make([]int, N)
-	for i := 0; i < N; i++ {
-		P[i] = nextInt() - 1
-	}
-	for i := 0; i < N; i++ {
-		I[i] = nextInt() - 1
-	}
-	Solve(N, P, I)
+	var N int
+	var S []byte
+	fmt.Fscan(_r, &N, &S)
+	ans := Solve(N, S)
+	fmt.Fprintf(_w, "%s\n", ans)
 }
 
-func Solve(N int, P, I []int) {
-	Iinv := make([]int, N) // Iinv[I[i]] = i
-	for i := 0; i < N; i++ {
-		Iinv[I[i]] = i
+type Item struct {
+	val, idx int
+}
+
+type SegTree struct {
+	n     int
+	nodes []Item
+	f     func(Item, Item) Item
+}
+
+func NewSegTree(data []int) *SegTree {
+	st := new(SegTree)
+	st.n = 1
+	for st.n < len(data) {
+		st.n *= 2
 	}
-	L := make([]int, N)
-	R := make([]int, N)
-	for i := 0; i < N; i++ {
-		L[i] = -1
-		R[i] = -1
-	}
-	var dfs func(int, int, int, int) bool
-	dfs = func(pl, pr, il, ir int) bool {
-		idx := Iinv[P[pl]]
-		if idx < il || ir <= idx {
-			return false
+	st.nodes = make([]Item, st.n*2-1)
+	for i := st.n - 1; i < st.n*2-1; i++ {
+		if i-(st.n-1) < len(data) {
+			st.nodes[i] = Item{data[i-(st.n-1)], i - (st.n - 1)}
+		} else {
+			st.nodes[i] = Item{INF, -1}
 		}
-		if idx > il {
-			L[P[pl]] = P[pl+1]
-			if !dfs(pl+1, pl+1+(idx-il), il, idx) {
-				return false
+	}
+	st.f = func(a, b Item) Item {
+		if a.val < b.val {
+			return a
+		} else if a.val > b.val {
+			return b
+		} else {
+			if a.idx < b.idx {
+				return b
+			} else {
+				return a
 			}
 		}
-		if ir > idx+1 {
-			R[P[pl]] = P[pl+1+(idx-il)]
-			if !dfs(pl+1+(idx-il), pr, idx+1, ir) {
-				return false
-			}
-		}
-		return true
 	}
-	if P[0] != 0 || !dfs(0, N, 0, N) {
-		fmt.Fprintf(_w, "-1\n")
-	} else {
-		for i := 0; i < N; i++ {
-			fmt.Fprintf(_w, "%d %d\n", L[i]+1, R[i]+1)
+	for i := st.n - 2; i >= 0; i-- {
+		l, r := i*2+1, i*2+2
+		st.nodes[i] = st.f(st.nodes[l], st.nodes[r])
+	}
+	return st
+}
+
+func (st *SegTree) Query(l, r int) Item {
+	var dfs func(int, int, int) Item
+	dfs = func(k, lb, ub int) Item {
+		if l <= lb && ub <= r {
+			return st.nodes[k]
+		} else if ub <= l || r <= lb {
+			return Item{INF, -1}
+		} else {
+			mid := (lb + ub) / 2
+			lv := dfs(2*k+1, lb, mid)
+			rv := dfs(2*k+2, mid, ub)
+			return st.f(lv, rv)
 		}
 	}
+	return dfs(0, 0, st.n)
+}
+
+func Solve(N int, S []byte) string {
+	data := make([]int, N)
+	for i := 0; i < N; i++ {
+		data[i] = int(S[i] - 'a')
+	}
+	T := make([]byte, N)
+	for i := 0; i < N; i++ {
+		T[i] = S[i]
+	}
+	st := NewSegTree(data)
+	l, r := 0, N
+	for l+1 < r {
+		item := st.Query(l+1, r)
+		// fmt.Printf("l: %d, r: %d, nextr: %d\n", l, r, item.idx)
+		if item.val != INF && item.val < data[l] {
+			// swap l, item.idx
+			T[l], T[item.idx] = T[item.idx], T[l]
+			r = item.idx
+		}
+		l++
+	}
+	return string(T)
 }
 
 func Contains(x int, nums ...int) bool {
@@ -107,18 +145,16 @@ func MinInt(nums ...int) int {
 	return ret
 }
 
-func nextInt() int {
-	_s.Scan()
-	i, e := strconv.Atoi(_s.Text())
-	if e != nil {
-		panic(e)
-	}
-	return i
-}
+// func nextInt() int {
+// 	_s.Scan()
+// 	i, e := strconv.Atoi(_s.Text())
+// 	if e != nil {
+// 		panic(e)
+// 	}
+// 	return i
+// }
 
 // func nextLine() string {
 // 	_s.Scan()
 // 	return _s.Text()
 // }
-
-var _s, _w, _r = bufio.NewScanner(os.Stdin), bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdout)
