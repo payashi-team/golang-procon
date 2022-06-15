@@ -11,69 +11,42 @@ import (
 
 const (
 	INF = int(1 << 61)
-	// MOD = int(1e9 + 7)
-	MOD = 998244353
+	MOD = int(1e9 + 7)
+	// MOD = 998244353
 )
 
-var _w, _r, _s = bufio.NewWriter(os.Stdout), bufio.NewReader(os.Stdin), bufio.NewScanner(os.Stdout)
+// var _r = bufio.NewReader(os.Stdin)
+var _w = bufio.NewWriter(os.Stdout)
+var _s = bufio.NewScanner(os.Stdin)
 
 func main() {
 	defer _w.Flush()
-	var N, M, Q int
-	fmt.Fscan(_r, &N, &M, &Q)
-	items := make([]Item, N)
+	_s.Split(bufio.ScanWords)
+	N := nextInt()
+	T := make([]int, N)
 	for i := 0; i < N; i++ {
-		item := &items[i]
-		fmt.Fscan(_r, &item.w, &item.v)
+		T[i] = nextInt()
 	}
-	sort.Slice(items, func(i, j int) bool {
-		if items[i].v != items[j].v {
-			return items[i].v > items[j].v
-		} else {
-			return items[i].w > items[j].w
-		}
-	})
-	X := make([]Box, M)
-	for i := 0; i < M; i++ {
-		fmt.Fscan(_r, &X[i].cap)
-		X[i].idx = i
+	sort.Ints(T)
+	cnt := make(map[int]int)
+	ret := 0
+	for i := 0; i < N; i++ {
+		ret += T[i] * (N - i)
+		cnt[T[i]]++
 	}
-	sort.Slice(X, func(i, j int) bool {
-		return X[i].cap < X[j].cap
-	})
-	for q := 0; q < Q; q++ {
-		var l, r int
-		fmt.Fscan(_r, &l, &r)
-		l--
-		r--
-		ret := 0
-		used := make([]bool, N)
-		for i := 0; i < M; i++ {
-			if l <= X[i].idx && X[i].idx <= r {
-				continue
-			}
-			for j := 0; j < N; j++ {
-				if used[j] {
-					continue
-				}
-				if X[i].cap >= items[j].w {
-					used[j] = true
-					ret += items[j].v
-					break
-				}
-			}
-		}
-		// fmt.Fprintf(_w, "%d\n", ret)
-		fmt.Printf("%d\n", ret)
+	fact := make([]int, 10001)
+	fact[0] = 1
+	for i := 1; i <= 10000; i++ {
+		fact[i] = fact[i-1] * i
+		fact[i] %= MOD
 	}
-}
+	ret2 := 1
+	for _, v := range cnt {
+		ret2 *= fact[v]
+		ret2 %= MOD
+	}
+	fmt.Fprintf(_w, "%d\n%d\n", ret, ret2)
 
-type Item struct {
-	w, v int
-}
-
-type Box struct {
-	cap, idx int
 }
 
 func Contains(x int, nums ...int) bool {
