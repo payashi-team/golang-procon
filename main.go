@@ -23,30 +23,24 @@ func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	N := nextInt()
-	T := make([]int, N)
+	A := make([]int, N)
+	mp := make(map[int]int)
 	for i := 0; i < N; i++ {
-		T[i] = nextInt()
+		A[i] = nextInt()
+		mp[A[i]]++
 	}
-	sort.Ints(T)
-	cnt := make(map[int]int)
-	ret := 0
-	for i := 0; i < N; i++ {
-		ret += T[i] * (N - i)
-		cnt[T[i]]++
+	B := make([]int, 0)
+	for k := range mp {
+		B = append(B, k)
 	}
-	fact := make([]int, 10001)
-	fact[0] = 1
-	for i := 1; i <= 10000; i++ {
-		fact[i] = fact[i-1] * i
-		fact[i] %= MOD
+	sort.Ints(B)
+	C := make(map[int]int)
+	for i, v := range B {
+		C[v] = i
 	}
-	ret2 := 1
-	for _, v := range cnt {
-		ret2 *= fact[v]
-		ret2 %= MOD
+	for _, v := range A {
+		fmt.Fprintf(_w, "%d\n", C[v])
 	}
-	fmt.Fprintf(_w, "%d\n%d\n", ret, ret2)
-
 }
 
 func Contains(x int, nums ...int) bool {
