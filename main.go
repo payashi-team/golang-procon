@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -22,25 +21,17 @@ var _s = bufio.NewScanner(os.Stdin)
 func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
-	N := nextInt()
-	A := make([]int, N)
-	mp := make(map[int]int)
-	for i := 0; i < N; i++ {
-		A[i] = nextInt()
-		mp[A[i]]++
+	A, B, C := nextInt(), nextInt(), nextInt()
+	if A < B {
+		A, B = B, A
 	}
-	B := make([]int, 0)
-	for k := range mp {
-		B = append(B, k)
+	if A < C {
+		A, C = C, A
 	}
-	sort.Ints(B)
-	C := make(map[int]int)
-	for i, v := range B {
-		C[v] = i
-	}
-	for _, v := range A {
-		fmt.Fprintf(_w, "%d\n", C[v])
-	}
+	R := A + B + C
+	r := MaxInt(A-(B+C), 0)
+	ret := float64(R*R-r*r) * math.Pi
+	fmt.Fprintf(_w, "%.10f\n", ret)
 }
 
 func Contains(x int, nums ...int) bool {
