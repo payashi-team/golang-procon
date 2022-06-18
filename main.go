@@ -18,20 +18,80 @@ const (
 var _w = bufio.NewWriter(os.Stdout)
 var _s = bufio.NewScanner(os.Stdin)
 
+type Range struct {
+	l, r int
+}
+
 func main() {
 	defer _w.Flush()
 	_s.Split(bufio.ScanWords)
-	A, B, C := nextInt(), nextInt(), nextInt()
-	if A < B {
-		A, B = B, A
+	N := nextInt()
+	X := make([]int, N)
+	C := make([]int, N)
+	for i := 0; i < N; i++ {
+		X[i] = nextInt() - 1
 	}
-	if A < C {
-		A, C = C, A
+	for i := 0; i < N; i++ {
+		C[i] = nextInt()
 	}
-	R := A + B + C
-	r := MaxInt(A-(B+C), 0)
-	ret := float64(R*R-r*r) * math.Pi
-	fmt.Fprintf(_w, "%.10f\n", ret)
+	Solve(N, X, C)
+}
+
+func Solve(N int, X, C []int) {
+	Xinv := make([][]int, N)
+	for i := 0; i < N; i++ {
+		Xinv[i] = make([]int, 0)
+	}
+	for i := 0; i < N; i++ {
+		Xinv[X[i]] = append(Xinv[X[i]], i)
+	}
+	used := make([]bool, N)
+	Y := make([]int, 0)
+	var dfs func(int)
+	dfs = func(pos int) {
+		used[pos] = true
+		nxt := X[pos]
+		if !used[nxt] {
+			dfs(nxt)
+		}
+		Y = append(Y, pos)
+	}
+	for i := 0; i < N; i++ {
+		if !used[i] {
+			dfs(i)
+		}
+	}
+	// fmt.Fprintf(_w, "%v\n", Y)
+	used = make([]bool, N)
+	tmp := make([]int, 0)
+	var dfs2 func(int)
+	dfs2 = func(pos int) {
+		used[pos] = true
+		for _, nxt := range Xinv[pos] {
+			if !used[nxt] {
+				dfs2(nxt)
+			}
+		}
+		tmp = append(tmp, pos)
+	}
+	ret := 0
+	for i := N - 1; i >= 0; i-- {
+		if !used[Y[i]] {
+			tmp = make([]int, 0)
+			dfs2(Y[i])
+			// fmt.Fprintf(_w, "%v\n", tmp)
+			if len(tmp) > 1 {
+				min := INF
+				for _, v := range tmp {
+					if min > C[v] {
+						min = C[v]
+					}
+				}
+				ret += min
+			}
+		}
+	}
+	fmt.Fprintf(_w, "%d\n", ret)
 }
 
 func Contains(x int, nums ...int) bool {
