@@ -18,80 +18,63 @@ const (
 var _w = bufio.NewWriter(os.Stdout)
 var _s = bufio.NewScanner(os.Stdin)
 
-type Range struct {
-	l, r int
-}
-
 func main() {
-	defer _w.Flush()
+	// defer _w.Flush()
 	_s.Split(bufio.ScanWords)
 	N := nextInt()
-	X := make([]int, N)
-	C := make([]int, N)
-	for i := 0; i < N; i++ {
-		X[i] = nextInt() - 1
+	from2 := make([]int, N+1)
+	for i := 3; i <= N; i++ {
+		fmt.Printf("? %d %d\n", 2, i)
+		from2[i] = nextInt()
 	}
-	for i := 0; i < N; i++ {
-		C[i] = nextInt()
-	}
-	Solve(N, X, C)
-}
-
-func Solve(N int, X, C []int) {
-	Xinv := make([][]int, N)
-	for i := 0; i < N; i++ {
-		Xinv[i] = make([]int, 0)
-	}
-	for i := 0; i < N; i++ {
-		Xinv[X[i]] = append(Xinv[X[i]], i)
-	}
-	used := make([]bool, N)
-	Y := make([]int, 0)
-	var dfs func(int)
-	dfs = func(pos int) {
-		used[pos] = true
-		nxt := X[pos]
-		if !used[nxt] {
-			dfs(nxt)
-		}
-		Y = append(Y, pos)
-	}
-	for i := 0; i < N; i++ {
-		if !used[i] {
-			dfs(i)
+	alphas := make([]int, 0)
+	betas := make([]int, 0)
+	for i := 3; i <= N; i++ {
+		if from2[i] == 1 {
+			alphas = append(alphas, i)
+		} else if from2[i] == 2 {
+			betas = append(betas, i)
 		}
 	}
-	// fmt.Fprintf(_w, "%v\n", Y)
-	used = make([]bool, N)
-	tmp := make([]int, 0)
-	var dfs2 func(int)
-	dfs2 = func(pos int) {
-		used[pos] = true
-		for _, nxt := range Xinv[pos] {
-			if !used[nxt] {
-				dfs2(nxt)
-			}
-		}
-		tmp = append(tmp, pos)
+	if len(alphas) == 0 {
+		fmt.Printf("! 1\n")
+		return
 	}
-	ret := 0
-	for i := N - 1; i >= 0; i-- {
-		if !used[Y[i]] {
-			tmp = make([]int, 0)
-			dfs2(Y[i])
-			// fmt.Fprintf(_w, "%v\n", tmp)
-			if len(tmp) > 1 {
-				min := INF
-				for _, v := range tmp {
-					if min > C[v] {
-						min = C[v]
-					}
-				}
-				ret += min
-			}
+	mindAlpha := INF // min distance from 1 to alphas
+	mindBeta := INF  // min distance from 1 to betas
+	alpha := -1
+	beta := -1
+	for _, a := range alphas {
+		fmt.Printf("? %d %d\n", 1, a)
+		d := nextInt()
+		if mindAlpha > d {
+			mindAlpha = d
+			alpha = a
 		}
 	}
-	fmt.Fprintf(_w, "%d\n", ret)
+	if mindAlpha != 2 {
+		fmt.Printf("! %d\n", mindAlpha+1)
+		return
+	}
+	for _, b := range betas {
+		fmt.Printf("? %d %d\n", 1, b)
+		d := nextInt()
+		if mindBeta > d {
+			mindBeta = d
+			beta = b
+		}
+	}
+	if mindBeta != 1 {
+		fmt.Printf("! 1\n")
+		return
+	}
+	fmt.Printf("? %d %d\n", alpha, beta)
+	d := nextInt()
+	if d == 1 {
+		fmt.Printf("! 3\n")
+	} else {
+		fmt.Printf("! 1\n")
+	}
 }
 
 func Contains(x int, nums ...int) bool {
