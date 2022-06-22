@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -17,36 +18,38 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Range struct {
+	l, r int
+}
+
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 
-	A, B, K := NextInt(), NextInt(), NextInt()
-
-	p, q := A+B, B
-	num := 1 // pCq
-	for i := 0; i < q; i++ {
-		num *= p - i
-		num /= i + 1
+	N, D := NextInt(), NextInt()
+	X := make([]Range, N)
+	for i := 0; i < N; i++ {
+		X[i].l, X[i].r = NextInt(), NextInt()
 	}
-	ret := ""
-	for i := 0; i < A+B; i++ {
-		tmp := num * (p - q) / p
-		// use a
-		if tmp >= K {
-			ret += "a"
-			num = tmp
-			// use b
+	sort.Slice(X, func(i, j int) bool {
+		if X[i].r != X[j].r {
+			return X[i].r < X[j].r
 		} else {
-			ret += "b"
-			q--
-			num = num - tmp
-			K -= tmp
+			return X[i].l < X[j].l
 		}
-		p--
+	})
+	pos := -1
+	ret := 0
+	for i := 0; i < N; i++ {
+		if X[i].l <= pos {
+			continue
+		} else {
+			ret++
+			pos = X[i].r + D - 1
+		}
 	}
-	fmt.Fprintf(wr, "%s\n", ret)
+	fmt.Fprintf(wr, "%d\n", ret)
 }
 
 func Contains(x int, nums ...int) bool {
