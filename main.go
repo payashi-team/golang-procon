@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -18,38 +17,33 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Range struct {
-	l, r int
-}
-
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
+	N := NextInt()
+	A := make([]int, N)
+	for i := 0; i < N; i++ {
+		A[i] = NextInt()
+	}
+	ans := Solve(N, A)
+	fmt.Fprintf(wr, "%d\n", ans)
+}
 
-	N, D := NextInt(), NextInt()
-	X := make([]Range, N)
-	for i := 0; i < N; i++ {
-		X[i].l, X[i].r = NextInt(), NextInt()
+func Solve(N int, A []int) int {
+	mp := make(map[int]int)
+	for _, v := range A {
+		mp[v]++
 	}
-	sort.Slice(X, func(i, j int) bool {
-		if X[i].r != X[j].r {
-			return X[i].r < X[j].r
-		} else {
-			return X[i].l < X[j].l
-		}
-	})
-	pos := -1
 	ret := 0
-	for i := 0; i < N; i++ {
-		if X[i].l <= pos {
-			continue
-		} else {
-			ret++
-			pos = X[i].r + D - 1
+	M := MaxInt(A...)
+	// i*j = k
+	for i := 1; i <= M; i++ {
+		for j := 1; j <= M/i; j++ {
+			ret += mp[i] * mp[j] * mp[i*j]
 		}
 	}
-	fmt.Fprintf(wr, "%d\n", ret)
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
