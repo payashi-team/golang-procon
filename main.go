@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"container/heap"
 	"fmt"
 	"math"
 	"os"
@@ -18,100 +17,56 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Edge struct {
-	to, cost int
+type Point struct {
+	x, y int
 }
 
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, M, K := NextInt(), NextInt(), NextInt()
-	edges := make([][]Edge, N)
-	X := make([]int, N)
-	Y := make([]int, N)
-	for i := 0; i < M; i++ {
-		a, b, c := NextInt(), NextInt(), NextInt()
-		a--
-		b--
-		edges[a] = append(edges[a], Edge{b, c})
-		edges[b] = append(edges[b], Edge{a, c})
+	R, C := NextInt(), NextInt()
+	var s, g Point
+	s.y, s.x, g.y, g.x = NextInt(), NextInt(), NextInt(), NextInt()
+	s.y--
+	s.x--
+	g.y--
+	g.x--
+	field := make([][]byte, R)
+	for i := 0; i < R; i++ {
+		field[i] = []byte(NextLine())
 	}
-	for i := 0; i < N; i++ {
-		X[i], Y[i] = NextInt(), NextInt()
-	}
-	ans := Solve(N, M, K, edges, X, Y)
+	ans := Solve(R, C, s, g, field)
 	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-func Solve(N, M, K int, edges [][]Edge, X, Y []int) int {
-	pq := make(PQueue, 0)
-	heap.Init(&pq)
-	used := make([]bool, N*2*K)
-	dist := make([]int, N*2*K)
-	for i := 0; i < N*2*K; i++ {
-		dist[i] = INF
-	}
-	dist[0] = 0
-	heap.Push(&pq, &Item{0, 0, 0})
-	for pq.Len() > 0 {
-		p := heap.Pop(&pq).(*Item)
-		u := p.flower*N + p.node
-		if dist[u] < p.cost {
-			continue
+func Solve(R, C int, s, g Point, field [][]byte) int {
+	que := make([]Item, 0)
+	que = append(que, Item{s, 0})
+	used := make(map[Point]bool)
+	used[s] = true
+	ds := []Point{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+	for len(que) > 0 {
+		item := que[0]
+		que = que[1:]
+		if item.p == g {
+			return item.dist
 		}
-		used[u] = true
-		for _, e := range edges[p.node] {
-			v := p.flower*N + e.to
-			if !used[v] && dist[v] > dist[u]+e.cost {
-				dist[v] = dist[u] + e.cost
-				heap.Push(&pq, &Item{e.to, dist[v], p.flower})
+		for _, d := range ds {
+			nxt := Point{item.p.x + d.x, item.p.y + d.y}
+			if !used[nxt] && 0 <= nxt.y && nxt.y < R && 0 <= nxt.x && nxt.x < C && field[nxt.y][nxt.x] == '.' {
+				used[nxt] = true
+				que = append(que, Item{nxt, item.dist + 1})
 			}
 		}
-		if p.flower+X[p.node]>=2*K{
-			continue
-		}
-		t := (p.flower+X[p.node])*N + p.node
-		if !used[t] && p.flower < K && dist[t] > dist[u]+Y[p.node] {
-			dist[t] = dist[u] + Y[p.node]
-			heap.Push(&pq, &Item{p.node, dist[t], p.flower + X[p.node]})
-		}
 	}
-	ret := INF
-	for i := 0; i < K; i++ {
-		ret = MinInt(ret, dist[(K+i)*N+N-1])
-	}
-	if ret == INF {
-		return -1
-	}
-	return ret
+	return -1
 
 }
 
 type Item struct {
-	node, cost, flower int
-}
-
-type PQueue []*Item
-
-func (pq PQueue) Len() int { return len(pq) }
-func (pq PQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-func (pq PQueue) Less(i, j int) bool {
-	return pq[i].cost < pq[j].cost
-}
-func (pq *PQueue) Pop() interface{} {
-	old := (*pq)
-	n := len(old)
-	item := old[n-1]
-	old[n-1] = nil
-	*pq = old[:n-1]
-	return item
-}
-func (pq *PQueue) Push(x interface{}) {
-	item := x.(*Item)
-	*pq = append(*pq, item)
+	p    Point
+	dist int
 }
 
 func Contains(x int, nums ...int) bool {
