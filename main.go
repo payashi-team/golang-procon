@@ -19,88 +19,77 @@ var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
 type Edge struct {
-	to, yen, snook int
+	to, cost int
 }
 
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, M, S, T := NextInt(), NextInt(), NextInt(), NextInt()
-	S--
-	T--
+	N, M, K := NextInt(), NextInt(), NextInt()
 	edges := make([][]Edge, N)
+	X := make([]int, N)
+	Y := make([]int, N)
 	for i := 0; i < M; i++ {
-		u, v, a, b := NextInt(), NextInt(), NextInt(), NextInt()
-		u--
-		v--
-		edges[u] = append(edges[u], Edge{v, a, b})
-		edges[v] = append(edges[v], Edge{u, a, b})
+		a, b, c := NextInt(), NextInt(), NextInt()
+		a--
+		b--
+		edges[a] = append(edges[a], Edge{b, c})
+		edges[b] = append(edges[b], Edge{a, c})
 	}
-	ans := Solve(N, M, S, T, edges)
-	for _, v := range ans {
-		fmt.Fprintf(wr, "%d\n", v)
+	for i := 0; i < N; i++ {
+		X[i], Y[i] = NextInt(), NextInt()
 	}
+	ans := Solve(N, M, K, edges, X, Y)
+	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-func Solve(N, M, S, T int, edges [][]Edge) []int {
-	dist1 := make([]int, N) // from s by yen
-	for i := 0; i < N; i++ {
-		dist1[i] = INF
-	}
-	dist1[S] = 0
+func Solve(N, M, K int, edges [][]Edge, X, Y []int) int {
 	pq := make(PQueue, 0)
 	heap.Init(&pq)
-	heap.Push(&pq, &Item{S, 0})
-	used := make([]bool, N)
-	// dijkstra 1
+	used := make([]bool, N*2*K)
+	dist := make([]int, N*2*K)
+	for i := 0; i < N*2*K; i++ {
+		dist[i] = INF
+	}
+	dist[0] = 0
+	heap.Push(&pq, &Item{0, 0, 0})
 	for pq.Len() > 0 {
 		p := heap.Pop(&pq).(*Item)
-		used[p.node] = true
-		if dist1[p.node] < p.cost {
+		u := p.flower*N + p.node
+		if dist[u] < p.cost {
 			continue
 		}
+		used[u] = true
 		for _, e := range edges[p.node] {
-			if !used[e.to] && dist1[e.to] > p.cost+e.yen {
-				dist1[e.to] = p.cost + e.yen
-				heap.Push(&pq, &Item{e.to, p.cost + e.yen})
+			v := p.flower*N + e.to
+			if !used[v] && dist[v] > dist[u]+e.cost {
+				dist[v] = dist[u] + e.cost
+				heap.Push(&pq, &Item{e.to, dist[v], p.flower})
 			}
 		}
-	}
-	dist2 := make([]int, N) // from t by snook
-	for i := 0; i < N; i++ {
-		dist2[i] = INF
-	}
-	dist2[T] = 0
-	heap.Push(&pq, &Item{T, 0})
-	used = make([]bool, N)
-	// dijkstra 2
-	for pq.Len() > 0 {
-		p := heap.Pop(&pq).(*Item)
-		used[p.node] = true
-		if dist2[p.node] < p.cost {
+		if p.flower+X[p.node]>=2*K{
 			continue
 		}
-		for _, e := range edges[p.node] {
-			if !used[e.to] && dist2[e.to] > p.cost+e.snook {
-				dist2[e.to] = p.cost + e.snook
-				heap.Push(&pq, &Item{e.to, p.cost + e.snook})
-			}
+		t := (p.flower+X[p.node])*N + p.node
+		if !used[t] && p.flower < K && dist[t] > dist[u]+Y[p.node] {
+			dist[t] = dist[u] + Y[p.node]
+			heap.Push(&pq, &Item{p.node, dist[t], p.flower + X[p.node]})
 		}
 	}
-	ret := make([]int, N)
-	for i := 0; i < N; i++ {
-		ret[i] = int(1e15) - dist1[i] - dist2[i]
+	ret := INF
+	for i := 0; i < K; i++ {
+		ret = MinInt(ret, dist[(K+i)*N+N-1])
 	}
-	for i := N - 2; i >= 0; i-- {
-		ret[i] = MaxInt(ret[i], ret[i+1])
+	if ret == INF {
+		return -1
 	}
 	return ret
 
 }
 
 type Item struct {
-	node, cost int
+	node, cost, flower int
 }
 
 type PQueue []*Item
