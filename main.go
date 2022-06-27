@@ -17,56 +17,86 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Point struct {
-	x, y int
+type Road struct {
+	x, y, z int
 }
 
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	R, C := NextInt(), NextInt()
-	var s, g Point
-	s.y, s.x, g.y, g.x = NextInt(), NextInt(), NextInt(), NextInt()
-	s.y--
-	s.x--
-	g.y--
-	g.x--
-	field := make([][]byte, R)
-	for i := 0; i < R; i++ {
-		field[i] = []byte(NextLine())
+	N, M := ni(), ni()
+	dist := make([][]int, N)
+	for i := 0; i < N; i++ {
+		dist[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			dist[i][j] = INF
+		}
+		dist[i][i] = 0
 	}
-	ans := Solve(R, C, s, g, field)
-	fmt.Fprintf(wr, "%d\n", ans)
+	for i := 0; i < M; i++ {
+		A, B, C := ni(), ni(), ni()
+		A--
+		B--
+		dist[A][B] = C
+		dist[B][A] = C
+	}
+	K := ni()
+	roads := make([]Road, K)
+	for i := 0; i < K; i++ {
+		x, y, z := ni(), ni(), ni()
+		x--
+		y--
+		roads[i] = Road{x, y, z}
+	}
+	ans := Solve(N, M, dist, K, roads)
+	for i := 0; i < K; i++ {
+		fmt.Fprintf(wr, "%d\n", ans[i])
+	}
 }
 
-func Solve(R, C int, s, g Point, field [][]byte) int {
-	que := make([]Item, 0)
-	que = append(que, Item{s, 0})
-	used := make(map[Point]bool)
-	used[s] = true
-	ds := []Point{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
-	for len(que) > 0 {
-		item := que[0]
-		que = que[1:]
-		if item.p == g {
-			return item.dist
-		}
-		for _, d := range ds {
-			nxt := Point{item.p.x + d.x, item.p.y + d.y}
-			if !used[nxt] && 0 <= nxt.y && nxt.y < R && 0 <= nxt.x && nxt.x < C && field[nxt.y][nxt.x] == '.' {
-				used[nxt] = true
-				que = append(que, Item{nxt, item.dist + 1})
+func Solve(N, M int, dist [][]int, K int, roads []Road) []int {
+	for k := 0; k < N; k++ {
+		for i := 0; i < N; i++ {
+			for j := 0; j < N; j++ {
+				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
 			}
 		}
 	}
-	return -1
-
+	sum := 0
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			sum += dist[i][j]
+		}
+	}
+	ret := make([]int, 0)
+	for _, r := range roads {
+		diff := dist[r.x][r.y] - r.z
+		if diff <= 0 {
+			ret = append(ret, sum)
+			continue
+		}
+		memo := make([]Pair, 0)
+		for i := 0; i < N; i++ {
+			for j := i + 1; j < N; j++ {
+				ndist := MinInt(dist[i][r.x]+dist[r.y][j], dist[i][r.y]+dist[r.x][j]) + r.z
+				if ndist < dist[i][j] {
+					memo = append(memo, Pair{i, j, ndist})
+					sum -= dist[i][j] - ndist
+				}
+			}
+		}
+		for _, m := range memo {
+			dist[m.x][m.y] = m.dist
+			dist[m.y][m.x] = m.dist
+		}
+		ret = append(ret, sum)
+	}
+	return ret
 }
 
-type Item struct {
-	p    Point
-	dist int
+type Pair struct {
+	x, y, dist int
 }
 
 func Contains(x int, nums ...int) bool {
@@ -106,7 +136,7 @@ func MinInt(nums ...int) int {
 	return ret
 }
 
-func NextInt() int {
+func ni() int {
 	sc.Scan()
 	x, e := strconv.Atoi(sc.Text())
 	if e != nil {
@@ -115,7 +145,7 @@ func NextInt() int {
 	return x
 }
 
-func NextLine() string {
+func nl() string {
 	sc.Scan()
 	return sc.Text()
 }
