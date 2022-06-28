@@ -17,8 +17,8 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Road struct {
-	x, y, z int
+type Edge struct {
+	from, to, cost int
 }
 
 func main() {
@@ -26,77 +26,46 @@ func main() {
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N, M := ni(), ni()
-	dist := make([][]int, N)
-	for i := 0; i < N; i++ {
-		dist[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			dist[i][j] = INF
-		}
-		dist[i][i] = 0
-	}
+	edges := make([]Edge, M)
 	for i := 0; i < M; i++ {
-		A, B, C := ni(), ni(), ni()
-		A--
-		B--
-		dist[A][B] = C
-		dist[B][A] = C
+		a, b, c := ni(), ni(), ni()
+		a--
+		b--
+		edges[i] = Edge{a, b, -c}
 	}
-	K := ni()
-	roads := make([]Road, K)
-	for i := 0; i < K; i++ {
-		x, y, z := ni(), ni(), ni()
-		x--
-		y--
-		roads[i] = Road{x, y, z}
-	}
-	ans := Solve(N, M, dist, K, roads)
-	for i := 0; i < K; i++ {
-		fmt.Fprintf(wr, "%d\n", ans[i])
-	}
+	Solve(N, M, edges)
 }
 
-func Solve(N, M int, dist [][]int, K int, roads []Road) []int {
-	for k := 0; k < N; k++ {
-		for i := 0; i < N; i++ {
-			for j := 0; j < N; j++ {
-				dist[i][j] = MinInt(dist[i][j], dist[i][k]+dist[k][j])
-			}
-		}
-	}
-	sum := 0
+func Solve(N, M int, edges []Edge) {
+	// bellman-ford
+	dist := make([]int, N)
 	for i := 0; i < N; i++ {
-		for j := i + 1; j < N; j++ {
-			sum += dist[i][j]
-		}
+		dist[i] = INF
 	}
-	ret := make([]int, 0)
-	for _, r := range roads {
-		diff := dist[r.x][r.y] - r.z
-		if diff <= 0 {
-			ret = append(ret, sum)
-			continue
-		}
-		memo := make([]Pair, 0)
-		for i := 0; i < N; i++ {
-			for j := i + 1; j < N; j++ {
-				ndist := MinInt(dist[i][r.x]+dist[r.y][j], dist[i][r.y]+dist[r.x][j]) + r.z
-				if ndist < dist[i][j] {
-					memo = append(memo, Pair{i, j, ndist})
-					sum -= dist[i][j] - ndist
-				}
+	dist[0] = 0
+	for i := 0; i < N-1; i++ {
+		for _, e := range edges {
+			if dist[e.from] != INF && dist[e.to] > dist[e.from]+e.cost {
+				dist[e.to] = dist[e.from] + e.cost
 			}
 		}
-		for _, m := range memo {
-			dist[m.x][m.y] = m.dist
-			dist[m.y][m.x] = m.dist
-		}
-		ret = append(ret, sum)
 	}
-	return ret
-}
-
-type Pair struct {
-	x, y, dist int
+	negative := make([]bool, N)
+	for i := 0; i < N; i++ {
+		for _, e := range edges {
+			if dist[e.from] != INF && dist[e.to] > dist[e.from]+e.cost {
+				negative[e.to] = true
+			}
+			if negative[e.from] {
+				negative[e.to] = true
+			}
+		}
+	}
+	if negative[N-1] {
+		fmt.Fprintf(wr, "inf\n")
+	} else {
+		fmt.Fprintf(wr, "%d\n", -dist[N-1])
+	}
 }
 
 func Contains(x int, nums ...int) bool {
