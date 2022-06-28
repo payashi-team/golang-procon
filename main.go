@@ -25,46 +25,85 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, M := ni(), ni()
-	edges := make([]Edge, M)
-	for i := 0; i < M; i++ {
-		a, b, c := ni(), ni(), ni()
-		a--
-		b--
-		edges[i] = Edge{a, b, -c}
+	N := ni()
+	edges := make([][]int, N)
+	for i := 0; i < N; i++ {
+		edges[i] = make([]int, 0)
 	}
-	Solve(N, M, edges)
+	for i := 0; i < N-1; i++ {
+		x, y := ni()-1, ni()-1
+		edges[x] = append(edges[x], y)
+		edges[y] = append(edges[y], x)
+	}
+	Q := ni()
+	questions := make([]Query, Q)
+	for i := 0; i < Q; i++ {
+		questions[i] = Query{ni() - 1, ni() - 1}
+	}
+	Solve(N, edges, Q, questions)
 }
 
-func Solve(N, M int, edges []Edge) {
-	// bellman-ford
+type Query struct {
+	a, b int
+}
+
+func Solve(N int, edges [][]int, Q int, questions []Query) {
+	K := 1
+	for 1<<K < N {
+		K++
+	}
 	dist := make([]int, N)
 	for i := 0; i < N; i++ {
-		dist[i] = INF
+		dist[i] = -1
 	}
-	dist[0] = 0
-	for i := 0; i < N-1; i++ {
-		for _, e := range edges {
-			if dist[e.from] != INF && dist[e.to] > dist[e.from]+e.cost {
-				dist[e.to] = dist[e.from] + e.cost
+	parent := make([][]int, K)
+	for i := 0; i < K; i++ {
+		parent[i] = make([]int, N)
+	}
+	var dfs func(int, int, int)
+	dfs = func(u, p, d int) {
+		dist[u] = d
+		parent[0][u] = p
+		for _, v := range edges[u] {
+			if v == p {
+				continue
+			}
+			dfs(v, u, d+1)
+		}
+	}
+	dfs(0, -1, 0)
+	for k := 0; k < K-1; k++ {
+		for u := 0; u < N; u++ {
+			if parent[k][u] == -1 {
+				parent[k+1][u] = -1
+			} else {
+				parent[k+1][u] = parent[k][parent[k][u]]
 			}
 		}
 	}
-	negative := make([]bool, N)
-	for i := 0; i < N; i++ {
-		for _, e := range edges {
-			if dist[e.from] != INF && dist[e.to] > dist[e.from]+e.cost {
-				negative[e.to] = true
-			}
-			if negative[e.from] {
-				negative[e.to] = true
+	for _, q := range questions {
+		u, v := q.a, q.b
+		// v is deeper
+		if dist[u] > dist[v] {
+			u, v = v, u
+		}
+		for k := 0; k < K; k++ {
+			if (dist[v]-dist[u])>>k&1 == 1 {
+				v = parent[k][v]
 			}
 		}
-	}
-	if negative[N-1] {
-		fmt.Fprintf(wr, "inf\n")
-	} else {
-		fmt.Fprintf(wr, "%d\n", -dist[N-1])
+		if u == v {
+			fmt.Fprintf(wr, "%d\n", dist[q.a]+dist[q.b]-2*dist[u]+1)
+			continue
+		}
+		for k := K - 1; k >= 0; k-- {
+			if parent[k][u] != parent[k][v] {
+				u = parent[k][u]
+				v = parent[k][v]
+			}
+		}
+		w := parent[0][u]
+		fmt.Fprintf(wr, "%d\n", dist[q.a]+dist[q.b]-2*dist[w]+1)
 	}
 }
 
