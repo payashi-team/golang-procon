@@ -1,9 +1,6 @@
 
 tasks:
   - init: go get && go build ./... && go test ./...
-    command: go run
-
-
 
 vscode:
   extensions:
