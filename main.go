@@ -22,7 +22,19 @@ func main() {
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N := ni()
-	fmt.Fprintf(wr, "%d\n", 1<<N)
+	nums := make([]int, int(1e6)+2)
+	for i := 0; i < N; i++ {
+		a, b := ni(), ni()
+		nums[a]++
+		nums[b+1]--
+	}
+	max := 0
+	cur := 0
+	for i := 0; i <= int(1e6)+1; i++ {
+		cur += nums[i]
+		max = MaxInt(max, cur)
+	}
+	fmt.Fprintf(wr, "%d\n", max)
 }
 
 func Contains(x int, nums ...int) bool {
