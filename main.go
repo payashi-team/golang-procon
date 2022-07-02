@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -21,39 +22,36 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	H, W, A, B := ni(), ni(), ni(), ni()
-	ans := Solve(H, W, A, B)
+	N, M, X, Y := ni(), ni(), ni(), ni()
+	A := make([]int, N)
+	B := make([]int, M)
+	for i := 0; i < N; i++ {
+		A[i] = ni()
+	}
+	for i := 0; i < M; i++ {
+		B[i] = ni()
+	}
+	ans := Solve(N, M, X, Y, A, B)
 	fmt.Fprintf(wr, "%d\n", ans)
 
 }
 
-func Solve(H, W, A, B int) int {
+func Solve(N, M, X, Y int, A, B []int) int {
+	pos := 0
 	ret := 0
-	var dfs func(int, int, int, int)
-	dfs = func(bit, pos, a, b int) {
-		if pos == H*W {
-			ret++
-			return
+	for {
+		aidx := sort.Search(N, func(i int) bool { return pos <= A[i] })
+		if aidx == N {
+			break
 		}
-		if (bit>>pos)&1 == 1 {
-			dfs(bit, pos+1, a, b)
-			return
+		pos = A[aidx] + X
+		bidx := sort.Search(M, func(i int) bool { return pos <= B[i] })
+		if bidx == M {
+			break
 		}
-		bit |= 1 << pos
-		// put a square tatami
-		if b-1 >= 0 {
-			dfs(bit, pos+1, a, b-1)
-		}
-		// put a long tatami horizontally
-		if a-1 >= 0 && pos%W != W-1 {
-			dfs(bit|1<<(pos+1), pos+2, a-1, b)
-		}
-		// put a long tatami vertically
-		if a-1 >= 0 && pos+W < H*W {
-			dfs(bit|1<<(pos+W), pos+1, a-1, b)
-		}
+		pos = B[bidx] + Y
+		ret++
 	}
-	dfs(0, 0, A, B)
 	return ret
 }
 
