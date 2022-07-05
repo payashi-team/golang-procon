@@ -17,48 +17,70 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Point struct {
+	x, y int
+}
+
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N, K := ni(), ni()
-	A := make([]int, N)
+	points := make([]Point, N)
 	for i := 0; i < N; i++ {
-		A[i] = ni()
+		points[i] = Point{ni(), ni()}
 	}
-	ans := Solve(N, K, A)
-	for _, v := range ans {
-		fmt.Fprintf(wr, "%d ", v)
+	ans := Solve(N, K, points)
+	if ans < 0 {
+		fmt.Fprintf(wr, "Infinity\n")
+	} else {
+		fmt.Fprintf(wr, "%d\n", ans)
 	}
-	fmt.Fprintln(wr)
 }
 
-func Solve(N, K int, A []int) []int {
-	for k := 0; k < K; k++ {
-		B := make([]int, N)
-		for i := 0; i < N; i++ {
-			l := i - A[i]
-			r := i + A[i] + 1
-			B[MaxInt(0, l)]++
-			if r < N {
-				B[r]--
+func Solve(N, K int, ps []Point) int {
+	if K == 1 {
+		return -1
+	}
+	used := make([][]bool, N)
+	for i := 0; i < N; i++ {
+		used[i] = make([]bool, N)
+	}
+	ret := 0
+	for i := 0; i < N; i++ {
+		for j := i + 1; j < N; j++ {
+			if used[i][j] {
+				continue
 			}
-		}
-		for i := 0; i < N-1; i++ {
-			B[i+1] += B[i]
-		}
-		update := false
-		for i := 0; i < N; i++ {
-			A[i] = B[i]
-			if A[i] < N {
-				update = true
+			qs := []int{i, j}
+			for k := j + 1; k < N; k++ {
+				p1 := Subtract(ps[j], ps[i])
+				p2 := Subtract(ps[k], ps[i])
+				if p1.x*p2.y == p2.x*p1.y {
+					qs = append(qs, k)
+				}
 			}
-		}
-		if !update {
-			break
+			cnt := len(qs)
+			if cnt >= K {
+				ret++
+			}
+			for ii := 0; ii < cnt; ii++ {
+				for jj := ii + 1; jj < cnt; jj++ {
+					qi, qj := qs[ii], qs[jj]
+					if qi > qj {
+						qi, qj = qj, qi
+					}
+					used[qi][qj] = true
+				}
+			}
 		}
 	}
-	return A
+	return ret
+}
+
+func Subtract(a, b Point) Point {
+	return Point{a.x - b.x, a.y - b.y}
+
 }
 
 func Contains(x int, nums ...int) bool {
