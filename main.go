@@ -17,70 +17,29 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Point struct {
-	x, y int
-}
-
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, K := ni(), ni()
-	points := make([]Point, N)
-	for i := 0; i < N; i++ {
-		points[i] = Point{ni(), ni()}
-	}
-	ans := Solve(N, K, points)
-	if ans < 0 {
-		fmt.Fprintf(wr, "Infinity\n")
-	} else {
-		fmt.Fprintf(wr, "%d\n", ans)
-	}
+	N := ni()
+	ans := Solve(N)
+	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-func Solve(N, K int, ps []Point) int {
-	if K == 1 {
-		return -1
-	}
-	used := make([][]bool, N)
-	for i := 0; i < N; i++ {
-		used[i] = make([]bool, N)
-	}
+func Solve(N int) int {
 	ret := 0
-	for i := 0; i < N; i++ {
-		for j := i + 1; j < N; j++ {
-			if used[i][j] {
-				continue
-			}
-			qs := []int{i, j}
-			for k := j + 1; k < N; k++ {
-				p1 := Subtract(ps[j], ps[i])
-				p2 := Subtract(ps[k], ps[i])
-				if p1.x*p2.y == p2.x*p1.y {
-					qs = append(qs, k)
-				}
-			}
-			cnt := len(qs)
-			if cnt >= K {
-				ret++
-			}
-			for ii := 0; ii < cnt; ii++ {
-				for jj := ii + 1; jj < cnt; jj++ {
-					qi, qj := qs[ii], qs[jj]
-					if qi > qj {
-						qi, qj = qj, qi
-					}
-					used[qi][qj] = true
-				}
-			}
+	for q := 1; q*q <= N; q++ {
+		p := N / q
+		if q&1 == 1 {
+			ret += (p + 1) / 2
+			ret -= q / 2
+		} else {
+			ret += p / 2
+			ret -= (q - 1) / 2
 		}
+		ret %= MOD
 	}
 	return ret
-}
-
-func Subtract(a, b Point) Point {
-	return Point{a.x - b.x, a.y - b.y}
-
 }
 
 func Contains(x int, nums ...int) bool {
