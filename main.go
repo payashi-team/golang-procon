@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"math"
 	"os"
@@ -17,29 +18,80 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Edge struct {
+	to, cost int
+}
+
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N := ni()
-	ans := Solve(N)
+	N, M := ni(), ni()
+	edges := make([][]Edge, N)
+	for i := 0; i < M; i++ {
+		A, B, C := ni()-1, ni()-1, ni()
+		edges[A] = append(edges[A], Edge{B, C})
+		edges[B] = append(edges[B], Edge{A, C})
+	}
+	ans := Solve(N, M, edges)
 	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-func Solve(N int) int {
+func Solve(N, M int, edges [][]Edge) int {
 	ret := 0
-	for q := 1; q*q <= N; q++ {
-		p := N / q
-		if q&1 == 1 {
-			ret += (p + 1) / 2
-			ret -= q / 2
-		} else {
-			ret += p / 2
-			ret -= (q - 1) / 2
+	for i := 0; i < N; i++ {
+		for _, e := range edges[i] {
+			ret += MaxInt(0, e.cost)
 		}
-		ret %= MOD
+	}
+	ret /= 2
+	pq := make(PQueue, 0)
+	heap.Init(&pq)
+	used := make([]bool, N)
+	used[0] = true
+	for i := 0; i < len(edges[0]); i++ {
+		e := edges[0][i]
+		if used[e.to] {
+			continue
+		}
+		heap.Push(&pq, &e)
+	}
+	for pq.Len() > 0 {
+		e := heap.Pop(&pq).(*Edge)
+		if used[e.to] {
+			continue
+		} else {
+			ret -= MaxInt(0, e.cost)
+			used[e.to] = true
+			for i := 0; i < len(edges[e.to]); i++ {
+				f := edges[e.to][i]
+				if used[f.to] {
+					continue
+				}
+				heap.Push(&pq, &f)
+			}
+		}
 	}
 	return ret
+}
+
+type PQueue []*Edge
+
+func (pq PQueue) Len() int           { return len(pq) }
+func (pq PQueue) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
+func (pq PQueue) Less(i, j int) bool { return pq[i].cost < pq[j].cost }
+
+func (pq *PQueue) Push(x interface{}) {
+	item := x.(*Edge)
+	*pq = append(*pq, item)
+}
+func (pq *PQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	*pq = old[:n-1]
+	item := old[n-1]
+	old[n-1] = nil
+	return item
 }
 
 func Contains(x int, nums ...int) bool {
