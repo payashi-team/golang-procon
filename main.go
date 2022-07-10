@@ -17,39 +17,36 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Point struct {
+	x, y float64
+}
+
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, C := ni(), ni()
-	A := make([]int, N)
+	N := ni()
+	P := make([]Point, N)
 	for i := 0; i < N; i++ {
-		A[i] = ni() - 1
+		P[i].x, P[i].y = float64(ni()), float64(ni())
 	}
-	ans := Solve(N, C, A)
-	fmt.Fprintf(wr, "%d\n", ans)
+	ans := Solve(N, P)
+	fmt.Fprintf(wr, "%.9f\n", ans)
 }
 
-func Solve(N, C int, A []int) int {
-	ret := INF
-	for i := 0; i < 10; i++ {
-		for j := 0; j < 10; j++ {
-			if i == j {
-				continue
+func Solve(N int, P []Point) float64 {
+	ret := -1.0
+	for i := 0; i < N; i++ {
+		for j := 0; j < N; j++ {
+			dx := P[i].x - P[j].x
+			dy := P[i].y - P[j].y
+			dist := math.Sqrt(dx*dx + dy*dy)
+			if dist > ret {
+				ret = dist
 			}
-			cnt := 0
-			for k := 0; k < N; k++ {
-				if k&1 == 0 && A[k] != i {
-					cnt++
-				}
-				if k&1 == 1 && A[k] != j {
-					cnt++
-				}
-			}
-			ret = MinInt(ret, cnt)
 		}
 	}
-	return ret * C
+	return ret
 }
 
 func Contains(x int, nums ...int) bool {
