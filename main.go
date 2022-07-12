@@ -17,8 +17,12 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Edge struct {
+	to, color, cost int
+}
+
 type Query struct {
-	c, d int
+	color, cost, u, v int
 }
 
 func main() {
@@ -27,69 +31,78 @@ func main() {
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N := ni()
 	Q := ni()
-	edges := make([][]int, N)
+	edges := make([][]Edge, N)
 	for i := 0; i < N; i++ {
-		edges[i] = make([]int, 0)
+		edges[i] = make([]Edge, 0)
 	}
 	for i := 0; i < N-1; i++ {
 		a, b := ni()-1, ni()-1
-		edges[a] = append(edges[a], b)
-		edges[b] = append(edges[b], a)
+		c, d := ni()-1, ni()
+		edges[a] = append(edges[a], Edge{b, c, d})
+		edges[b] = append(edges[b], Edge{a, c, d})
 	}
 	qs := make([]Query, Q)
 	for i := 0; i < Q; i++ {
-		qs[i] = Query{ni() - 1, ni() - 1}
+		qs[i] = Query{ni() - 1, ni(), ni() - 1, ni() - 1}
 	}
-	Solve(N, Q, edges, qs)
+	ans := Solve(N, Q, edges, qs)
+	for _, v := range ans {
+		fmt.Fprintf(wr, "%d\n", v)
+	}
 }
 
-func Solve(N, Q int, edges [][]int, qs []Query) {
-	parent := make([][]int, N) // parent[i][j+1] := parent[parent[i][j]][j]
-	K := 0
+type Memo struct {
+	qi, color, cost, delta int
+}
+
+func Solve(N, Q int, edges [][]Edge, qs []Query) []int {
+	// lowest common ancestor
 	t := 1
+	K := 0
 	for t < N {
 		t *= 2
 		K++
 	}
 	depth := make([]int, N)
+	parent := make([][]int, N)
 	for i := 0; i < N; i++ {
 		parent[i] = make([]int, K)
 		parent[i][0] = -1
 	}
-	used := make([]bool, N)
-	var dfs func(int, int)
-	dfs = func(u, d int) {
-		used[u] = true
-		for _, v := range edges[u] {
-			if used[v] {
+	var lca func(int, int, int)
+	lca = func(cur, par, dep int) {
+		parent[cur][0] = par
+		depth[cur] = dep
+		for _, e := range edges[cur] {
+			if e.to == par {
 				continue
 			}
-			parent[v][0] = u
-			depth[v] = d + 1
-			dfs(v, d+1)
+			lca(e.to, cur, dep+1)
 		}
 	}
-	dfs(0, 0)
-	for j := 0; j < K-1; j++ {
-		for i := 0; i < N; i++ {
-			if parent[i][j] == -1 {
-				parent[i][j+1] = -1
+	lca(0, -1, 0)
+	for i := 0; i < K-1; i++ {
+		for j := 0; j < N; j++ {
+			if parent[j][i] == -1 {
+				parent[j][i+1] = -1
 			} else {
-				parent[i][j+1] = parent[parent[i][j]][j]
+				parent[j][i+1] = parent[parent[j][i]][i]
 			}
 		}
 	}
-	for _, q := range qs {
-		a, b := q.c, q.d
+	getlca := func(a, b int) int {
 		if depth[a] > depth[b] {
 			a, b = b, a
 		}
+		diff := depth[b] - depth[a]
 		// b is deeper
-		diff := depth[b] - depth[a] // >=0
 		for i := 0; i < K; i++ {
 			if (diff>>i)&1 == 1 {
 				b = parent[b][i]
 			}
+		}
+		if a == b {
+			return a
 		}
 		for i := K - 1; i >= 0; i-- {
 			if parent[a][i] != parent[b][i] {
@@ -97,17 +110,42 @@ func Solve(N, Q int, edges [][]int, qs []Query) {
 				b = parent[b][i]
 			}
 		}
-		c := parent[a][0]
-		dist := depth[q.c] + depth[q.d]
-		if c != -1 {
-			dist -= depth[c] * 2
-		}
-		if dist&1 == 1 {
-			fmt.Println("Road")
-		} else {
-			fmt.Println("Town")
+		return parent[a][0]
+	}
+
+	memo := make([][]Memo, N)
+	for i := 0; i < N; i++ {
+		memo[i] = make([]Memo, 0)
+	}
+	for i, q := range qs {
+		memo[q.u] = append(memo[q.u], Memo{i, q.color, q.cost, 1})
+		memo[q.v] = append(memo[q.v], Memo{i, q.color, q.cost, 1})
+		w := getlca(q.u, q.v)
+		if w != -1 {
+			memo[w] = append(memo[w], Memo{i, q.color, q.cost, -2})
 		}
 	}
+	ans := make([]int, Q)
+	cnt := make([]int, N-1)  // for each color
+	dist := make([]int, N-1) // for each color
+	var dfs func(int, int, int)
+	dfs = func(cur, par, sum int) {
+		for _, m := range memo[cur] {
+			ans[m.qi] += (sum - dist[m.color] + cnt[m.color]*m.cost) * m.delta
+		}
+		for _, e := range edges[cur] {
+			if e.to == par {
+				continue
+			}
+			cnt[e.color]++
+			dist[e.color] += e.cost
+			dfs(e.to, cur, sum+e.cost)
+			cnt[e.color]--
+			dist[e.color] -= e.cost
+		}
+	}
+	dfs(0, -1, 0)
+	return ans
 }
 
 func Contains(x int, nums ...int) bool {
