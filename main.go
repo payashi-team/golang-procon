@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -18,11 +19,7 @@ var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
 type Edge struct {
-	to, color, cost int
-}
-
-type Query struct {
-	color, cost, u, v int
+	from, to, cost, qi int
 }
 
 func main() {
@@ -30,122 +27,87 @@ func main() {
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N := ni()
+	M := ni()
 	Q := ni()
-	edges := make([][]Edge, N)
-	for i := 0; i < N; i++ {
-		edges[i] = make([]Edge, 0)
-	}
-	for i := 0; i < N-1; i++ {
-		a, b := ni()-1, ni()-1
-		c, d := ni()-1, ni()
-		edges[a] = append(edges[a], Edge{b, c, d})
-		edges[b] = append(edges[b], Edge{a, c, d})
-	}
-	qs := make([]Query, Q)
-	for i := 0; i < Q; i++ {
-		qs[i] = Query{ni() - 1, ni(), ni() - 1, ni() - 1}
-	}
-	ans := Solve(N, Q, edges, qs)
-	for _, v := range ans {
-		fmt.Fprintf(wr, "%d\n", v)
-	}
-}
-
-type Memo struct {
-	qi, color, cost, delta int
-}
-
-func Solve(N, Q int, edges [][]Edge, qs []Query) []int {
-	// lowest common ancestor
-	t := 1
-	K := 0
-	for t < N {
-		t *= 2
-		K++
-	}
-	depth := make([]int, N)
-	parent := make([][]int, N)
-	for i := 0; i < N; i++ {
-		parent[i] = make([]int, K)
-		parent[i][0] = -1
-	}
-	var lca func(int, int, int)
-	lca = func(cur, par, dep int) {
-		parent[cur][0] = par
-		depth[cur] = dep
-		for _, e := range edges[cur] {
-			if e.to == par {
-				continue
-			}
-			lca(e.to, cur, dep+1)
+	edges := make([]Edge, M+Q)
+	for i := 0; i < M; i++ {
+		a, b, c := ni()-1, ni()-1, ni()
+		if a == b {
+			continue
 		}
-	}
-	lca(0, -1, 0)
-	for i := 0; i < K-1; i++ {
-		for j := 0; j < N; j++ {
-			if parent[j][i] == -1 {
-				parent[j][i+1] = -1
-			} else {
-				parent[j][i+1] = parent[parent[j][i]][i]
-			}
-		}
-	}
-	getlca := func(a, b int) int {
-		if depth[a] > depth[b] {
+		if a > b {
 			a, b = b, a
 		}
-		diff := depth[b] - depth[a]
-		// b is deeper
-		for i := 0; i < K; i++ {
-			if (diff>>i)&1 == 1 {
-				b = parent[b][i]
-			}
-		}
-		if a == b {
-			return a
-		}
-		for i := K - 1; i >= 0; i-- {
-			if parent[a][i] != parent[b][i] {
-				a = parent[a][i]
-				b = parent[b][i]
-			}
-		}
-		return parent[a][0]
+		edges[i] = Edge{a, b, c, -1}
 	}
+	ans := make([]bool, Q)
+	for q := 0; q < Q; q++ {
+		u, v, w := ni()-1, ni()-1, ni()
+		if u > v {
+			u, v = v, u
+		}
+		edges[M+q] = Edge{u, v, w, q}
+	}
+	uf := NewUnionFind(N)
+	sort.Slice(edges, func(i, j int) bool { return edges[i].cost < edges[j].cost })
+	for _, e := range edges {
+		if e.qi < 0 {
+			if !uf.Same(e.from, e.to) {
+				uf.Unite(e.from, e.to)
+			}
+		} else {
+			ans[e.qi] = !uf.Same(e.from, e.to)
+		}
+	}
+	for _, v := range ans {
+		if v {
+			fmt.Fprintln(wr, "Yes")
+		} else {
+			fmt.Fprintln(wr, "No")
+		}
+	}
+}
 
-	memo := make([][]Memo, N)
+type UnionFind struct {
+	par, dep []int
+}
+
+func NewUnionFind(N int) *UnionFind {
+	uf := new(UnionFind)
+	uf.par = make([]int, N)
+	uf.dep = make([]int, N)
 	for i := 0; i < N; i++ {
-		memo[i] = make([]Memo, 0)
+		uf.par[i] = i
 	}
-	for i, q := range qs {
-		memo[q.u] = append(memo[q.u], Memo{i, q.color, q.cost, 1})
-		memo[q.v] = append(memo[q.v], Memo{i, q.color, q.cost, 1})
-		w := getlca(q.u, q.v)
-		if w != -1 {
-			memo[w] = append(memo[w], Memo{i, q.color, q.cost, -2})
-		}
+	return uf
+}
+
+func (uf *UnionFind) Root(x int) int {
+	if uf.par[x] == x {
+		return x
 	}
-	ans := make([]int, Q)
-	cnt := make([]int, N-1)  // for each color
-	dist := make([]int, N-1) // for each color
-	var dfs func(int, int, int)
-	dfs = func(cur, par, sum int) {
-		for _, m := range memo[cur] {
-			ans[m.qi] += (sum - dist[m.color] + cnt[m.color]*m.cost) * m.delta
-		}
-		for _, e := range edges[cur] {
-			if e.to == par {
-				continue
-			}
-			cnt[e.color]++
-			dist[e.color] += e.cost
-			dfs(e.to, cur, sum+e.cost)
-			cnt[e.color]--
-			dist[e.color] -= e.cost
-		}
+	uf.par[x] = uf.Root(uf.par[x])
+	return uf.par[x]
+}
+
+func (uf *UnionFind) Same(x, y int) bool {
+	return uf.Root(x) == uf.Root(y)
+}
+
+func (uf *UnionFind) Unite(x, y int) {
+	x = uf.Root(x)
+	y = uf.Root(y)
+	if x == y {
+		return
 	}
-	dfs(0, -1, 0)
-	return ans
+	if uf.dep[x] > uf.dep[y] {
+		uf.par[y] = x
+	} else if uf.dep[x] == uf.dep[y] {
+		uf.par[x] = y
+		uf.dep[y]++
+	} else {
+		uf.par[x] = y
+	}
 }
 
 func Contains(x int, nums ...int) bool {
