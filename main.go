@@ -17,89 +17,43 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Point struct {
-	x, y int
-}
-
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N := ni()
-	s := Point{ni(), ni()}
-	t := Point{ni(), ni()}
-	ps := make([]Point, N)
-	R := make([]int, N)
-	for i := 0; i < N; i++ {
-		ps[i] = Point{ni(), ni()}
-		R[i] = ni()
-	}
-	Solve(N, s, t, ps, R)
+	X := nl()
+	ans := Solve(X)
+	fmt.Fprintf(wr, "%s\n", ans)
 }
 
-func Solve(N int, s, t Point, ps []Point, R []int) {
-	uf := NewUnionFind(N + 2)
-	ps = append(ps, s, t)
-	R = append(R, 0, 0)
-	for i := 0; i < N+2; i++ {
-		p := ps[i]
-		for j := i + 1; j < N+2; j++ {
-			q := ps[j]
-			dist := (p.x-q.x)*(p.x-q.x) + (p.y-q.y)*(p.y-q.y)
-			rmax := (R[i] + R[j]) * (R[i] + R[j])
-			rmin := (R[i] - R[j]) * (R[i] - R[j])
-			if rmin <= dist && dist <= rmax {
-				uf.Unite(i, j)
+func Solve(X string) string {
+	K := len(X)
+
+	for a0 := 1; a0 < 10; a0++ {
+		for d := -9; d < 10; d++ {
+			ok := true
+			more := false
+			for i := 0; i < K; i++ {
+				t := int(X[i] - '0')
+				a := a0 + i*d
+				if a < 0 || 10 <= a || (!more && a < t) {
+					ok = false
+					break
+				}
+				if t < a {
+					more = true
+				}
+			}
+			if ok {
+				ans := make([]byte, K)
+				for i := 0; i < K; i++ {
+					ans[i] = byte('0' + a0 + i*d)
+				}
+				return string(ans)
 			}
 		}
 	}
-	if uf.Same(N, N+1) {
-		fmt.Fprintln(wr, "Yes")
-	} else {
-		fmt.Fprintln(wr, "No")
-	}
-}
-
-type UnionFind struct {
-	par, dep []int
-}
-
-func NewUnionFind(N int) *UnionFind {
-	uf := new(UnionFind)
-	uf.par = make([]int, N)
-	uf.dep = make([]int, N)
-	for i := 0; i < N; i++ {
-		uf.par[i] = i
-	}
-	return uf
-}
-
-func (uf *UnionFind) Root(x int) int {
-	if uf.par[x] == x {
-		return x
-	}
-	uf.par[x] = uf.Root(uf.par[x])
-	return uf.par[x]
-}
-
-func (uf *UnionFind) Same(x, y int) bool {
-	return uf.Root(x) == uf.Root(y)
-}
-
-func (uf *UnionFind) Unite(x, y int) {
-	x = uf.Root(x)
-	y = uf.Root(y)
-	if x == y {
-		return
-	}
-	if uf.dep[x] > uf.dep[y] {
-		uf.par[y] = x
-	} else if uf.dep[x] == uf.dep[y] {
-		uf.par[x] = y
-		uf.dep[y]++
-	} else {
-		uf.par[x] = y
-	}
+	return "ng"
 }
 
 func Contains(x int, nums ...int) bool {
