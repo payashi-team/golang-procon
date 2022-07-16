@@ -21,39 +21,74 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	X := nl()
-	ans := Solve(X)
-	fmt.Fprintf(wr, "%s\n", ans)
+	N, M := ni(), ni()
+	edges := make([][]int, N)
+	for i := 0; i < M; i++ {
+		a, b := ni()-1, ni()-1
+		edges[a] = append(edges[a], b)
+	}
+	Solve(N, M, edges)
 }
 
-func Solve(X string) string {
-	K := len(X)
-
-	for a0 := 1; a0 < 10; a0++ {
-		for d := -9; d < 10; d++ {
-			ok := true
-			more := false
-			for i := 0; i < K; i++ {
-				t := int(X[i] - '0')
-				a := a0 + i*d
-				if a < 0 || 10 <= a || (!more && a < t) {
-					ok = false
-					break
-				}
-				if t < a {
-					more = true
-				}
-			}
-			if ok {
-				ans := make([]byte, K)
-				for i := 0; i < K; i++ {
-					ans[i] = byte('0' + a0 + i*d)
-				}
-				return string(ans)
+func Solve(N, M int, edges [][]int) {
+	cnt := 0
+	uf := NewUfind(N)
+	ret := make([]int, N)
+	ret[N-1] = 0
+	for u := N - 1; u > 0; u-- {
+		cnt++
+		for _, v := range edges[u] {
+			if uf.Unite(u, v) {
+				cnt--
 			}
 		}
+		ret[u-1] = cnt
 	}
-	return "ng"
+	for i := 0; i < N; i++ {
+		fmt.Fprintf(wr, "%d\n", ret[i])
+	}
+}
+
+type UFind struct {
+	par, dep []int
+}
+
+func NewUfind(N int) *UFind {
+	uf := new(UFind)
+	uf.par = make([]int, N)
+	uf.dep = make([]int, N)
+	for i := 0; i < N; i++ {
+		uf.par[i] = i
+	}
+	return uf
+}
+
+func (uf *UFind) Root(x int) int {
+	if uf.par[x] == x {
+		return x
+	}
+	uf.par[x] = uf.Root(uf.par[x])
+	return uf.par[x]
+}
+
+func (uf *UFind) Same(x, y int) bool {
+	return uf.Root(x) == uf.Root(y)
+}
+
+func (uf *UFind) Unite(x, y int) bool {
+	x = uf.Root(x)
+	y = uf.Root(y)
+
+	if uf.Same(x, y) {
+		return false
+	}
+	if uf.dep[x] < uf.dep[y] {
+		x, y = y, x
+	} else if uf.dep[x] == uf.dep[y] {
+		uf.dep[x]++
+	}
+	uf.par[y] = x
+	return true
 }
 
 func Contains(x int, nums ...int) bool {
