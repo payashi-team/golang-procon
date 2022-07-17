@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -21,44 +22,124 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, M := ni(), ni()
-	edges := make([][]int, N)
-	for i := 0; i < M; i++ {
-		a, b := ni()-1, ni()-1
-		edges[a] = append(edges[a], b)
+	N, K := ni(), ni()
+	P := make([]int, N)
+	for i := 0; i < N; i++ {
+		P[i] = ni()
 	}
-	Solve(N, M, edges)
+	Solve(N, K, P)
 }
 
-func Solve(N, M int, edges [][]int) {
-	cnt := 0
-	uf := NewUfind(N)
+func Solve(N, K int, P []int) {
+	que := make([]int, 0)
 	ret := make([]int, N)
-	ret[N-1] = 0
-	for u := N - 1; u > 0; u-- {
-		cnt++
-		for _, v := range edges[u] {
-			if uf.Unite(u, v) {
-				cnt--
-			}
+	uf := NewUfind(N)
+	for i := 0; i < N; i++ {
+		idx := 0
+		if len(que) > 0 {
+			idx = sort.Search(len(que), func(j int) bool { return que[j] > P[i] })
 		}
-		ret[u-1] = cnt
+		// append item
+		if idx == len(que) {
+			que = append(que, P[i])
+		} else {
+			uf.Unite(que[idx]-1, P[i]-1)
+			que[idx] = P[i]
+		}
+		root := uf.Root(P[i] - 1)
+		if uf.size[root] == K {
+			ret[root] = i + 1
+			que = append(que[:idx], que[idx+1:]...)
+		}
 	}
 	for i := 0; i < N; i++ {
-		fmt.Fprintf(wr, "%d\n", ret[i])
+		sz := uf.Size(i)
+		if sz < K {
+			fmt.Fprintf(wr, "-1\n")
+		} else {
+			fmt.Fprintf(wr, "%d\n", ret[uf.Root(i)])
+		}
 	}
+}
+
+type SegTree struct {
+	nodes []Item
+	n     int
+}
+
+type Item struct {
+	idx, val int
+}
+
+func NewSegTree(n int) *SegTree {
+	st := new(SegTree)
+	st.n = 1
+	for st.n < n {
+		st.n *= 2
+	}
+	st.nodes = make([]Item, st.n*2-1)
+	for i := 1; i <= st.n; i++ {
+		if i <= n {
+			st.nodes[i-1+st.n-1] = Item{i, i}
+		} else {
+			st.nodes[i-1+st.n-1] = Item{-1, INF}
+		}
+	}
+	for i := st.n - 2; i >= 0; i-- {
+		l, r := i*2+1, i*2+2
+		if st.nodes[l].val < st.nodes[r].val {
+			st.nodes[i] = st.nodes[l]
+		}
+	}
+	return st
+}
+
+// idx is 1-indexed
+func (st *SegTree) Update(x, idx int) {
+	pos := idx - 1 + st.n - 1
+	for pos > 0 {
+		st.nodes[pos].val = x
+		par := (pos - 1) / 2
+		sib := 4*par + 3 - pos
+		x = MinInt(st.nodes[pos].val, st.nodes[sib].val)
+		pos = par
+	}
+	st.nodes[0].val = x
+}
+
+func (st *SegTree) Query(l, r int) Item {
+	var dfs func(int, int, int) Item
+	dfs = func(lb, ub, k int) Item {
+		if l <= lb && ub <= r {
+			return st.nodes[k]
+		} else if r <= lb || ub <= l {
+			return Item{-1, INF}
+		} else {
+			mid := (lb + ub) / 2
+			lv := dfs(lb, mid, 2*k+1)
+			rv := dfs(mid, ub, 2*k+2)
+			if lv.val > rv.val {
+				return rv
+			} else {
+				return lv
+			}
+		}
+	}
+	return dfs(0, st.n, 0)
 }
 
 type UFind struct {
-	par, dep []int
+	par, dep, size []int
 }
 
 func NewUfind(N int) *UFind {
 	uf := new(UFind)
 	uf.par = make([]int, N)
 	uf.dep = make([]int, N)
+	uf.size = make([]int, N)
 	for i := 0; i < N; i++ {
 		uf.par[i] = i
+		uf.size[i] = 1
 	}
 	return uf
 }
@@ -75,6 +156,11 @@ func (uf *UFind) Same(x, y int) bool {
 	return uf.Root(x) == uf.Root(y)
 }
 
+func (uf *UFind) Size(x int) int {
+	x = uf.Root(x)
+	return uf.size[x]
+}
+
 func (uf *UFind) Unite(x, y int) bool {
 	x = uf.Root(x)
 	y = uf.Root(y)
@@ -88,6 +174,7 @@ func (uf *UFind) Unite(x, y int) bool {
 		uf.dep[x]++
 	}
 	uf.par[y] = x
+	uf.size[x] += uf.size[y]
 	return true
 }
 
