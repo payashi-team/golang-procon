@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -22,44 +21,52 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, K := ni(), ni()
-	P := make([]int, N)
+	N, M := ni(), ni()
+	A := make([]int, N)
+	B := make([]int, N)
 	for i := 0; i < N; i++ {
-		P[i] = ni()
+		A[i] = ni()
+		B[i] = ni()
 	}
-	Solve(N, K, P)
+	Solve(N, M, A, B)
 }
 
-func Solve(N, K int, P []int) {
-	que := make([]int, 0)
-	ret := make([]int, N)
-	uf := NewUfind(N)
+func Solve(N, M int, A, B []int) {
+	ans := make([]int, M+2)
+	C := make([][]int, M+1)
 	for i := 0; i < N; i++ {
-		idx := 0
-		if len(que) > 0 {
-			idx = sort.Search(len(que), func(j int) bool { return que[j] > P[i] })
-		}
-		// append item
-		if idx == len(que) {
-			que = append(que, P[i])
-		} else {
-			uf.Unite(que[idx]-1, P[i]-1)
-			que[idx] = P[i]
-		}
-		root := uf.Root(P[i] - 1)
-		if uf.size[root] == K {
-			ret[root] = i + 1
-			que = append(que[:idx], que[idx+1:]...)
-		}
+		C[A[i]] = append(C[A[i]], i)
+		C[B[i]] = append(C[B[i]], i)
 	}
-	for i := 0; i < N; i++ {
-		sz := uf.Size(i)
-		if sz < K {
-			fmt.Fprintf(wr, "-1\n")
-		} else {
-			fmt.Fprintf(wr, "%d\n", ret[uf.Root(i)])
+	cnt := make([]int, N)
+	ng := N // A, Bどちらも含んでいない組の数
+	for i, j := 1, 1; i <= M; i++ {
+		for j <= M && ng != 0 {
+			for _, x := range C[j] {
+				if cnt[x] == 0 {
+					ng--
+				}
+				cnt[x]++
+			}
+			j++
 		}
+		if ng != 0 {
+			break
+		}
+		for _, x := range C[i] {
+			if cnt[x] == 1 {
+				ng++
+			}
+			cnt[x]--
+		}
+		ans[j-i]++
+		ans[M+1-i+1]--
 	}
+	for i := 0; i < M; i++ {
+		ans[i+1] += ans[i]
+		fmt.Fprintf(wr, "%d ", ans[i+1])
+	}
+	fmt.Fprintln(wr)
 }
 
 type SegTree struct {
