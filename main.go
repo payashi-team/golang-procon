@@ -21,52 +21,38 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N, M := ni(), ni()
-	A := make([]int, N)
-	B := make([]int, N)
-	for i := 0; i < N; i++ {
-		A[i] = ni()
-		B[i] = ni()
+	S, T, M := ni(), ni(), ni()
+	edges := make([][]int, S+T) // 0<=u<S, S<=v<S+T
+	for i := 0; i < M; i++ {
+		u, v := ni()-1, ni()-1
+		edges[u] = append(edges[u], v-S)
 	}
-	Solve(N, M, A, B)
+	Solve(S, T, M, edges)
 }
 
-func Solve(N, M int, A, B []int) {
-	ans := make([]int, M+2)
-	C := make([][]int, M+1)
-	for i := 0; i < N; i++ {
-		C[A[i]] = append(C[A[i]], i)
-		C[B[i]] = append(C[B[i]], i)
+func Solve(S, T, M int, edges [][]int) {
+	cnt := make([][]int, T)
+	for i := 0; i < T; i++ {
+		cnt[i] = make([]int, T)
+		for j := 0; j < T; j++ {
+			cnt[i][j] = -1
+		}
 	}
-	cnt := make([]int, N)
-	ng := N // A, Bどちらも含んでいない組の数
-	for i, j := 1, 1; i <= M; i++ {
-		for j <= M && ng != 0 {
-			for _, x := range C[j] {
-				if cnt[x] == 0 {
-					ng--
+	for u := 0; u < S; u++ {
+		for _, v1 := range edges[u] {
+			for _, v2 := range edges[u] {
+				if v1 == v2 {
+					continue
+				} else if cnt[v1][v2] < 0 {
+					cnt[v1][v2] = u
+				} else {
+					fmt.Fprintf(wr, "%d %d %d %d\n", v1+1+S, v2+1+S, u+1, cnt[v1][v2]+1)
+					return
 				}
-				cnt[x]++
 			}
-			j++
 		}
-		if ng != 0 {
-			break
-		}
-		for _, x := range C[i] {
-			if cnt[x] == 1 {
-				ng++
-			}
-			cnt[x]--
-		}
-		ans[j-i]++
-		ans[M+1-i+1]--
 	}
-	for i := 0; i < M; i++ {
-		ans[i+1] += ans[i]
-		fmt.Fprintf(wr, "%d ", ans[i+1])
-	}
-	fmt.Fprintln(wr)
+	fmt.Fprintf(wr, "-1\n")
 }
 
 type SegTree struct {
