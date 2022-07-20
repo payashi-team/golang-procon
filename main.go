@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -17,122 +18,65 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
+type Point struct {
+	x, y, idx int
+}
+
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	S, T, M := ni(), ni(), ni()
-	edges := make([][]int, S+T) // 0<=u<S, S<=v<S+T
-	for i := 0; i < M; i++ {
-		u, v := ni()-1, ni()-1
-		edges[u] = append(edges[u], v-S)
+	N := ni()
+	ps := make([]Point, N)
+	for i := 0; i < N; i++ {
+		ps[i] = Point{ni(), ni(), i}
 	}
-	Solve(S, T, M, edges)
+	ans := Solve(N, ps)
+	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-func Solve(S, T, M int, edges [][]int) {
-	cnt := make([][]int, T)
-	for i := 0; i < T; i++ {
-		cnt[i] = make([]int, T)
-		for j := 0; j < T; j++ {
-			cnt[i][j] = -1
+type Edge struct {
+	u, v, cost int
+}
+
+func Solve(N int, ps []Point) int {
+	sort.Slice(ps, func(i, j int) bool { return ps[i].x < ps[j].x })
+	edges := make([]Edge, 0)
+	for i := 0; i < N-1; i++ {
+		edges = append(edges, Edge{ps[i].idx, ps[i+1].idx, ps[i+1].x - ps[i].x})
+	}
+	sort.Slice(ps, func(i, j int) bool { return ps[i].y < ps[j].y })
+	for i := 0; i < N-1; i++ {
+		edges = append(edges, Edge{ps[i].idx, ps[i+1].idx, ps[i+1].y - ps[i].y})
+	}
+	sort.Slice(edges, func(i, j int) bool { return edges[i].cost < edges[j].cost })
+	cost := 0
+	uf := NewUFind(N)
+	cnt := 0
+	for _, e := range edges {
+		if uf.Same(e.u, e.v) {
+			continue
+		}
+		uf.Unite(e.u, e.v)
+		cost += e.cost
+		cnt++
+		if cnt == N-1 {
+			break
 		}
 	}
-	for u := 0; u < S; u++ {
-		for _, v1 := range edges[u] {
-			for _, v2 := range edges[u] {
-				if v1 == v2 {
-					continue
-				} else if cnt[v1][v2] < 0 {
-					cnt[v1][v2] = u
-				} else {
-					fmt.Fprintf(wr, "%d %d %d %d\n", v1+1+S, v2+1+S, u+1, cnt[v1][v2]+1)
-					return
-				}
-			}
-		}
-	}
-	fmt.Fprintf(wr, "-1\n")
-}
-
-type SegTree struct {
-	nodes []Item
-	n     int
-}
-
-type Item struct {
-	idx, val int
-}
-
-func NewSegTree(n int) *SegTree {
-	st := new(SegTree)
-	st.n = 1
-	for st.n < n {
-		st.n *= 2
-	}
-	st.nodes = make([]Item, st.n*2-1)
-	for i := 1; i <= st.n; i++ {
-		if i <= n {
-			st.nodes[i-1+st.n-1] = Item{i, i}
-		} else {
-			st.nodes[i-1+st.n-1] = Item{-1, INF}
-		}
-	}
-	for i := st.n - 2; i >= 0; i-- {
-		l, r := i*2+1, i*2+2
-		if st.nodes[l].val < st.nodes[r].val {
-			st.nodes[i] = st.nodes[l]
-		}
-	}
-	return st
-}
-
-// idx is 1-indexed
-func (st *SegTree) Update(x, idx int) {
-	pos := idx - 1 + st.n - 1
-	for pos > 0 {
-		st.nodes[pos].val = x
-		par := (pos - 1) / 2
-		sib := 4*par + 3 - pos
-		x = MinInt(st.nodes[pos].val, st.nodes[sib].val)
-		pos = par
-	}
-	st.nodes[0].val = x
-}
-
-func (st *SegTree) Query(l, r int) Item {
-	var dfs func(int, int, int) Item
-	dfs = func(lb, ub, k int) Item {
-		if l <= lb && ub <= r {
-			return st.nodes[k]
-		} else if r <= lb || ub <= l {
-			return Item{-1, INF}
-		} else {
-			mid := (lb + ub) / 2
-			lv := dfs(lb, mid, 2*k+1)
-			rv := dfs(mid, ub, 2*k+2)
-			if lv.val > rv.val {
-				return rv
-			} else {
-				return lv
-			}
-		}
-	}
-	return dfs(0, st.n, 0)
+	return cost
 }
 
 type UFind struct {
-	par, dep, size []int
+	dep, par []int
 }
 
-func NewUfind(N int) *UFind {
+func NewUFind(N int) *UFind {
 	uf := new(UFind)
 	uf.par = make([]int, N)
 	uf.dep = make([]int, N)
-	uf.size = make([]int, N)
 	for i := 0; i < N; i++ {
 		uf.par[i] = i
-		uf.size[i] = 1
 	}
 	return uf
 }
@@ -149,26 +93,18 @@ func (uf *UFind) Same(x, y int) bool {
 	return uf.Root(x) == uf.Root(y)
 }
 
-func (uf *UFind) Size(x int) int {
-	x = uf.Root(x)
-	return uf.size[x]
-}
-
-func (uf *UFind) Unite(x, y int) bool {
+func (uf *UFind) Unite(x, y int) {
 	x = uf.Root(x)
 	y = uf.Root(y)
-
-	if uf.Same(x, y) {
-		return false
+	if x == y {
+		return
 	}
-	if uf.dep[x] < uf.dep[y] {
-		x, y = y, x
-	} else if uf.dep[x] == uf.dep[y] {
+	if uf.dep[x] == uf.dep[y] {
 		uf.dep[x]++
+	} else if uf.dep[x] < uf.dep[y] {
+		x, y = y, x
 	}
 	uf.par[y] = x
-	uf.size[x] += uf.size[y]
-	return true
 }
 
 func Contains(x int, nums ...int) bool {
