@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"sort"
 	"strconv"
 )
 
@@ -18,53 +17,43 @@ const (
 var sc = bufio.NewScanner(os.Stdin)
 var wr = bufio.NewWriter(os.Stdout)
 
-type Point struct {
-	x, y, idx int
-}
-
 func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
 	N := ni()
-	ps := make([]Point, N)
+	R := make([]int, N)
 	for i := 0; i < N; i++ {
-		ps[i] = Point{ni(), ni(), i}
+		R[i] = ni()
 	}
-	ans := Solve(N, ps)
+	ans := Solve(N, R)
 	fmt.Fprintf(wr, "%d\n", ans)
 }
 
-type Edge struct {
-	u, v, cost int
-}
-
-func Solve(N int, ps []Point) int {
-	sort.Slice(ps, func(i, j int) bool { return ps[i].x < ps[j].x })
-	edges := make([]Edge, 0)
-	for i := 0; i < N-1; i++ {
-		edges = append(edges, Edge{ps[i].idx, ps[i+1].idx, ps[i+1].x - ps[i].x})
+func Solve(N int, R []int) int {
+	dp := make([][]int, 2)
+	for i := 0; i < 2; i++ {
+		dp[i] = make([]int, N)
 	}
-	sort.Slice(ps, func(i, j int) bool { return ps[i].y < ps[j].y })
-	for i := 0; i < N-1; i++ {
-		edges = append(edges, Edge{ps[i].idx, ps[i+1].idx, ps[i+1].y - ps[i].y})
-	}
-	sort.Slice(edges, func(i, j int) bool { return edges[i].cost < edges[j].cost })
-	cost := 0
-	uf := NewUFind(N)
-	cnt := 0
-	for _, e := range edges {
-		if uf.Same(e.u, e.v) {
-			continue
-		}
-		uf.Unite(e.u, e.v)
-		cost += e.cost
-		cnt++
-		if cnt == N-1 {
-			break
+	// dp0 increasing
+	// dp1 decreasing
+	for i := 0; i < N; i++ {
+		dp[0][i] = 1
+		dp[1][i] = 1
+		for j := 0; j < i; j++ {
+			if R[i] > R[j] {
+				dp[0][i] = MaxInt(dp[0][i], dp[1][j]+1)
+			} else if R[i] < R[j] {
+				dp[1][i] = MaxInt(dp[1][i], dp[0][j]+1)
+			}
 		}
 	}
-	return cost
+	ret := MaxInt(dp[0][N-1], dp[1][N-1])
+	if ret < 3 {
+		return 0
+	} else {
+		return ret
+	}
 }
 
 type UFind struct {
