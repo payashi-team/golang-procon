@@ -21,13 +21,12 @@ func main() {
 	defer wr.Flush()
 	sc.Split(bufio.ScanWords)
 	sc.Buffer([]byte{}, math.MaxInt32)
-	N := ni()
-	R := make([]int, N)
-	for i := 0; i < N; i++ {
-		R[i] = ni()
-	}
-	ans := Solve(N, R)
-	fmt.Fprintf(wr, "%d\n", ans)
+	a := float64(ni())
+	b := float64(ni())
+	d := float64(ni())
+	d = d / 360 * 2 * math.Pi
+	s, c := math.Sincos(d)
+	fmt.Fprintf(wr, "%.8f %.8f\n", a*c-b*s, a*s+b*c)
 }
 
 func Solve(N int, R []int) int {
